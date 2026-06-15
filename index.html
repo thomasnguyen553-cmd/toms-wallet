@@ -483,13 +483,20 @@ function renderNextMonthAdj(sp) {
   const el=document.getElementById("nextMonthAdj");
   if (!overCats.length){el.innerHTML="";return;}
   let html=`<div class="alert alert-yellow" style="margin-top:4px">
-    <div style="font-weight:700;margin-bottom:8px">📊 Gợi ý điều chỉnh tháng sau</div>`;
+    <div style="font-weight:700;margin-bottom:8px">📊 Suggested adjustment for next month</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Overspend this month is deducted from next month's budget to keep you on track.</div>`;
   overCats.forEach(([k,c])=>{
     const over=(sp[k]||0)-c.limit;
-    html+=`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px">
-      <span>${c.icon} ${c.name}</span><span>→ đề xuất ${fmt(c.limit+over)}/tháng</span></div>`;
+    const nextLimit=Math.max(0, c.limit-over);
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px">
+      <span>${c.icon} ${c.name}</span>
+      <span style="text-align:right">
+        <span style="color:var(--muted);text-decoration:line-through">${fmt(c.limit)}</span>
+        <span style="color:var(--yellow);margin-left:6px">→ ${fmt(nextLimit)}</span>
+      </span>
+    </div>`;
   });
-  html+=`<button class="btn btn-ghost" style="margin-top:8px;padding:10px;font-size:12px" onclick="applyNextMonthAdj()">✅ Áp dụng cho tháng sau</button></div>`;
+  html+=`<button class="btn btn-ghost" style="margin-top:8px;padding:10px;font-size:12px" onclick="applyNextMonthAdj()">✅ Apply to next month</button></div>`;
   el.innerHTML=html;
 }
 
@@ -498,12 +505,16 @@ function applyNextMonthAdj() {
   const d=new Date(); d.setMonth(d.getMonth()+1);
   const nm=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
   if (!DATA.budgetAdj) DATA.budgetAdj={};
-  if (!DATA.budgetAdj[nm]) DATA.budgetAdj[nm]={};
+  DATA.budgetAdj[nm]={};
   Object.entries(cats).forEach(([k,c])=>{
     const over=(sp[k]||0)-c.limit;
-    if (over>0) DATA.budgetAdj[nm][k]=(DATA.budgetAdj[nm][k]||0)+Math.ceil(over);
+    if (over>0) {
+      // Cut next month by the overspend amount to balance it out
+      const nextLimit=Math.max(0, c.limit-over);
+      DATA.budgetAdj[nm][k]=nextLimit-c.limit; // store as delta (negative)
+    }
   });
-  saveData(); showToast("Đã điều chỉnh ngân sách tháng sau ✓");
+  saveData(); showToast("Next month's budget adjusted ✓");
 }
 
 function renderGoals() {
