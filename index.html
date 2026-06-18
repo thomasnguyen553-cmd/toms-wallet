@@ -3,837 +3,645 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tom's Wallet</title>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-const FIREBASE_CONFIG = {
-  apiKey:"AIzaSyB-3YB9wrF1w8PDb3M6DBp0Ix9U2ItC0uQ",
-  authDomain:"toms-wallet.firebaseapp.com",
-  databaseURL:"https://toms-wallet-default-rtdb.firebaseio.com",
-  projectId:"toms-wallet",
-  storageBucket:"toms-wallet.firebasestorage.app",
-  messagingSenderId:"770625290338",
-  appId:"1:770625290338:web:a78ab58dbbf01290b7913b"
-};
-const params = new URLSearchParams(location.search);
-let wid = params.get("wallet");
-if (!wid) { wid = Math.random().toString(36).slice(2,10); history.replaceState(null,"","?wallet="+wid); }
-document.getElementById("walletLink").textContent = location.href;
-document.getElementById("walletId").textContent   = wid;
-const app = initializeApp(FIREBASE_CONFIG);
-const db  = getDatabase(app);
-const DB  = ref(db,"wallets/"+wid);
-window._saveDB = d => set(DB,d);
-onValue(DB, snap => {
-  const d = snap.val();
-  window._onRemoteData(d || window._defaultData());
-});
-</script>
+<title>Ví Của Tôi</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&family=Lato:wght@300;400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0d12;--surface:#111620;--surface2:#181f2e;--border:#1e2535;--text:#e8ecf4;--muted:#4a5568;--accent:#3b82f6;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--purple:#8b5cf6;}
-body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding-bottom:80px}
-button,input,select{font-family:'Inter',sans-serif}
+body{background:#0a0c0f;color:#dde3ee;font-family:'Lato',sans-serif;min-height:100vh;padding-bottom:60px}
+button,input,label,select{font-family:'Lato',sans-serif}
 input,select{outline:none}
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-.hdr{background:linear-gradient(135deg,#0d1117,#111927);padding:16px;border-bottom:1px solid var(--border)}
-.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.logo{font-size:20px;font-weight:800;letter-spacing:-.5px}
-.logo span{color:var(--accent)}
-.month-badge{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)}
-.sync-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#12151a}
+::-webkit-scrollbar-thumb{background:#252a35;border-radius:4px}
+
+.header{background:linear-gradient(135deg,#0d1117,#1a1f2e);padding:20px 16px 16px;border-bottom:1px solid #252a35}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start}
+.header-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:#00d2d3;letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px}
+.header-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#fff}
+.header-title span{color:#00d2d3}
+.header-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478;margin-top:3px}
+.status-bar{margin-top:10px;background:#081f14;border:1px solid #0a4030;border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:6px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#1dd1a1;flex-shrink:0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.link-box{background:#0d1520;border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px}
-.link-text{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);flex:1;word-break:break-all}
-.copy-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;flex-shrink:0}
-.bal-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
-.bal-card{background:var(--surface);padding:14px 12px;text-align:center}
-.bal-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
-.bal-val{font-size:20px;font-weight:800;letter-spacing:-.5px}
-.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
-.tab{flex:1;min-width:60px;padding:12px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.tab.active{border-bottom-color:var(--accent);color:var(--accent)}
-.content{padding:14px}
-.hidden{display:none!important}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.card-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
-.card-amt{font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right}
-.bar-bg{background:var(--border);border-radius:99px;height:6px;overflow:hidden;margin:6px 0}
-.bar-fill{height:100%;border-radius:99px;transition:width .4s}
-.card-sub{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;align-items:center}
-.badge{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:700}
-.badge-red{background:#7f1d1d;color:#fca5a5}
-.badge-yellow{background:#78350f;color:#fcd34d}
-.badge-green{background:#064e3b;color:#6ee7b7}
-.card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.act-btn{flex:1;padding:7px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:11px;font-weight:600}
-.act-btn:hover{color:var(--text)}
-.act-btn.edit{border-color:var(--accent);color:var(--accent)}
-.act-btn.del{border-color:var(--red);color:var(--red)}
-.field-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-.inp{width:100%;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;margin-bottom:12px}
-.inp:focus{border-color:var(--accent)}
-.inp-prefix-wrap{position:relative;margin-bottom:12px}
-.inp-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;font-weight:700}
-.inp-big{padding:12px 14px 12px 28px;font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
-.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:opacity .2s}
-.btn:active{opacity:.8}
-.btn-blue{background:var(--accent);color:#fff}
-.btn-green{background:var(--green);color:#fff}
-.btn-red{background:var(--red);color:#fff}
-.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.type-toggle{display:flex;background:var(--surface);border-radius:12px;padding:4px;margin-bottom:14px;border:1px solid var(--border)}
-.type-btn{flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
-.cat-btn{padding:9px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--muted);cursor:pointer;font-size:11px;font-weight:600;text-align:left;transition:all .15s}
-.cat-btn.active{border-color:var(--accent);background:#1e3a5f;color:var(--accent)}
-.txn{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
+.status-text{font-family:'JetBrains Mono',monospace;font-size:9px;color:#1dd1a1;letter-spacing:.06em}
+
+.balance-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#252a35}
+.balance-card{background:#12151a;padding:12px 6px;text-align:center}
+.balance-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a6478;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.balance-val{font-family:'Playfair Display',serif;font-size:15px;font-weight:700}
+
+.progress-bar-wrap{background:#12151a;padding:10px 16px;border-bottom:1px solid #252a35}
+.progress-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.progress-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478;text-transform:uppercase;letter-spacing:.08em}
+.bar-bg{background:#252a35;border-radius:99px;height:6px;overflow:visible;position:relative}
+.bar-fill{height:100%;border-radius:99px;transition:width .5s;position:relative}
+.progress-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478;margin-top:4px}
+
+.tabs{display:flex;background:#12151a;border-bottom:1px solid #252a35}
+.tab-btn{flex:1;padding:12px 2px;background:none;border:none;border-bottom:2px solid transparent;color:#5a6478;font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:all .2s}
+.tab-btn.active{border-bottom-color:#00d2d3;color:#00d2d3}
+
+.content{padding:16px 16px 0}
+
+.group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.group-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:700}
+.group-total{font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a6478}
+.group-wrap{margin-bottom:20px}
+
+.cat-card{background:#12151a;border:1px solid #252a35;border-radius:12px;padding:11px 14px;margin-bottom:8px}
+.cat-card.over{border-color:#c0392b}
+.cat-card.warn{border-color:#e67e2244}
+.cat-top{display:flex;justify-content:space-between;margin-bottom:7px}
+.cat-name{font-size:13px;display:flex;align-items:center;gap:6px;font-weight:600}
+.badge{font-size:9px;padding:1px 6px;border-radius:99px;font-family:monospace}
+.badge-over{background:#c0392b;color:#fff}
+.badge-warn{background:#e67e22;color:#fff}
+.cat-amt{font-family:'JetBrains Mono',monospace;font-size:11px}
+.cat-remaining{font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478;margin-top:5px}
+
+.type-toggle{display:flex;background:#12151a;border-radius:12px;padding:4px;margin-bottom:16px;border:1px solid #252a35}
+.type-btn{flex:1;padding:10px 0;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;font-family:'Lato',sans-serif}
+
+.field-label{font-size:11px;color:#5a6478;margin-bottom:6px;font-family:monospace;text-transform:uppercase;letter-spacing:.1em}
+.amount-wrap{position:relative;margin-bottom:12px}
+.amount-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#5a6478;font-size:16px;font-weight:700}
+.amount-input{width:100%;padding:13px 14px 13px 28px;background:#12151a;border:1px solid #252a35;border-radius:10px;color:#dde3ee;font-size:22px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.text-input{width:100%;padding:11px 14px;background:#12151a;border:1px solid #252a35;border-radius:10px;color:#dde3ee;font-size:13px;margin-bottom:12px}
+.date-input{width:100%;padding:11px 14px;background:#12151a;border:1px solid #252a35;border-radius:10px;color:#dde3ee;font-size:13px;margin-bottom:16px}
+
+.cat-grid-group{margin-bottom:12px}
+.cat-grid-label{font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cat-btn{padding:9px 10px;border:1px solid #252a35;border-radius:10px;background:#12151a;color:#8090a0;cursor:pointer;font-size:11px;font-weight:600;text-align:left;transition:all .15s;font-family:'Lato',sans-serif}
+
+.preview-box{background:#12151a;border:1px solid #252a35;border-radius:10px;padding:12px 14px;margin-bottom:16px}
+.preview-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+
+.submit-btn{width:100%;padding:15px 0;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;letter-spacing:.05em;font-family:'Lato',sans-serif;margin-bottom:16px}
+
+/* GOAL CARD */
+.goal-card{background:#12151a;border-radius:14px;padding:16px 14px;margin-bottom:14px}
+.goal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.goal-name{font-size:14px;font-weight:700}
+.goal-pct{font-family:'JetBrains Mono',monospace;font-size:11px}
+.goal-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a6478;margin-bottom:10px}
+.goal-row{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:8px}
+
+/* Progress bar with target marker */
+.goal-bar-wrap{position:relative;height:20px;display:flex;align-items:center}
+.goal-bar-bg{background:#252a35;border-radius:99px;height:8px;width:100%;overflow:visible;position:relative}
+.goal-bar-fill{height:100%;border-radius:99px;position:absolute;top:0;left:0;transition:width .5s}
+.target-marker{position:absolute;top:-5px;width:3px;height:18px;border-radius:2px;background:#fff;z-index:10;transform:translateX(-50%)}
+.target-marker-label{position:absolute;top:-18px;font-family:'JetBrains Mono',monospace;font-size:8px;color:#fff;transform:translateX(-50%);white-space:nowrap;background:#252a35;padding:1px 4px;border-radius:4px}
+
+/* Status badges */
+.goal-status{font-size:9px;padding:2px 8px;border-radius:99px;font-family:monospace;font-weight:700}
+.status-ahead{background:#0a4030;color:#1dd1a1}
+.status-behind{background:#3a0f0f;color:#ff6b6b}
+.status-on-track{background:#1a2a0a;color:#a3d977}
+
+/* Saving goal selector */
+.saving-goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.saving-goal-btn{padding:12px 10px;border:1px solid #252a35;border-radius:12px;background:#12151a;color:#8090a0;cursor:pointer;font-size:11px;font-weight:700;text-align:center;line-height:1.5;font-family:'Lato',sans-serif;transition:all .2s}
+
+/* Deadline editor */
+.deadline-edit{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.deadline-input{background:#1a1f2e;border:1px solid #252a35;border-radius:6px;color:#dde3ee;font-size:10px;padding:4px 8px;font-family:'JetBrains Mono',monospace}
+
+.txn-item{display:flex;align-items:center;gap:10px;background:#12151a;border:1px solid #252a35;border-radius:12px;padding:12px 14px;margin-bottom:8px}
 .txn-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .txn-info{flex:1;min-width:0}
 .txn-name{font-size:13px;font-weight:600}
-.txn-meta{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
-.txn-amt{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0}
-.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 0 0 4px}
-.alert{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12px;line-height:1.6}
-.alert-red{background:#7f1d1d22;border:1px solid #7f1d1d;color:#fca5a5}
-.alert-yellow{background:#78350f22;border:1px solid #78350f;color:#fcd34d}
-.alert-blue{background:#1e3a5f22;border:1px solid #1e3a5f;color:#93c5fd}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;width:100%;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:14px}
-.modal-btns{display:flex;gap:8px;margin-top:4px}
-.modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-family:'JetBrains Mono',monospace;z-index:9999;display:none;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5)}
-.month-hist-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);cursor:pointer;font-size:11px;margin-bottom:12px}
-.month-hist-btn.active{border-color:var(--accent);color:var(--accent)}
-.footer-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 16px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:center}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5}
+.txn-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a6478;margin-top:2px}
+.txn-amt{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;flex-shrink:0}
+.del-btn{background:none;border:none;color:#5a6478;cursor:pointer;font-size:20px;padding:0 0 0 6px;flex-shrink:0}
+
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-family:'JetBrains Mono',monospace;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;display:none}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px}
+.modal{background:#1a0f08;border:1px solid #c0392b;border-radius:16px;padding:24px;max-width:340px;width:100%}
+.modal-title{font-size:15px;font-weight:700;color:#e74c3c;margin-bottom:8px}
+.modal-msg{font-size:13px;color:#d4a060;line-height:1.7;margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px 0;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Lato',sans-serif}
+
+.backup-modal{background:#12151a;border:1px solid #252a35;border-radius:16px;padding:24px;max-width:340px;width:100%}
+.backup-btn{width:100%;padding:13px 0;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:'Lato',sans-serif}
+.backup-btn-header{background:#1a1f2e;border:1px solid #252a35;border-radius:10px;padding:8px 12px;color:#5a6478;cursor:pointer;font-size:12px;font-family:'Lato',sans-serif}
+
+.footer{position:fixed;bottom:0;left:0;right:0;background:#0d1117;border-top:1px solid #252a35;padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#1dd1a1;text-align:center;letter-spacing:.08em}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
+
 <div class="toast" id="toast"></div>
 
-<!-- WARN MODAL -->
-<div class="modal-bg hidden" id="warnModal">
+<!-- Warning Modal -->
+<div class="modal-bg" id="warnModal">
   <div class="modal">
-    <div class="modal-title">⚠️ Vượt ngân sách!</div>
-    <div class="modal-msg" id="warnMsg" style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px"></div>
+    <div style="font-size:32px;margin-bottom:10px">⚠️</div>
+    <div class="modal-title">Cảnh báo vượt ngân sách!</div>
+    <div class="modal-msg" id="warnMsg"></div>
     <div class="modal-btns">
-      <button class="modal-btn" style="background:var(--red);color:#fff" onclick="confirmOver()">Vẫn ghi</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('warnModal')">Hủy</button>
+      <button class="modal-btn" style="background:#c0392b;color:#fff;font-weight:700" onclick="confirmOver()">Vẫn ghi lại</button>
+      <button class="modal-btn" style="background:#252a35;color:#dde3ee" onclick="closeWarn()">Hủy</button>
     </div>
   </div>
 </div>
 
-<!-- EDIT BUDGET MODAL -->
-<div class="modal-bg hidden" id="editBudgetModal">
-  <div class="modal">
-    <div class="modal-title" id="editBudgetTitle">✏️ Sửa danh mục</div>
-    <div class="field-label">Tên danh mục</div>
-    <input class="inp" id="ebName" placeholder="Tên danh mục">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="ebIcon" placeholder="🛒" maxlength="2">
-    <div class="field-label">Giới hạn hàng tháng (AUD)</div>
-    <input type="number" class="inp" id="ebLimit" placeholder="500">
-    <div class="modal-btns">
-      <button class="modal-btn btn-blue" onclick="saveEditBudget()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('editBudgetModal')">Hủy</button>
+<!-- Backup Modal -->
+<div class="modal-bg" id="backupModal">
+  <div class="backup-modal">
+    <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:4px">Sao lưu dữ liệu</div>
+    <div style="font-size:12px;color:#5a6478;margin-bottom:20px;line-height:1.6">Xuất file JSON để backup, hoặc nhập lại từ file đã lưu.</div>
+    <button class="backup-btn" style="background:#00d2d3;color:#0a0c0f" onclick="exportData()">📤 Xuất dữ liệu (backup)</button>
+    <label class="backup-btn" style="display:block;background:#252a35;color:#dde3ee;text-align:center;cursor:pointer">
+      📥 Nhập dữ liệu
+      <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+    </label>
+    <button class="backup-btn" style="background:none;color:#5a6478;border:1px solid #252a35;margin-bottom:0" onclick="closeBackup()">Đóng</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-label">Quản lý tài chính cá nhân</div>
+      <div class="header-title">Ví của <span>Tôi</span></div>
+      <div class="header-sub" id="monthLabel"></div>
     </div>
+    <button class="backup-btn-header" onclick="openBackup()">💾 Backup</button>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text" id="statusText">ĐANG TẢI...</div>
   </div>
 </div>
 
-<!-- ADD BUDGET MODAL -->
-<div class="modal-bg hidden" id="budgetModal">
-  <div class="modal">
-    <div class="modal-title">📁 Thêm danh mục ngân sách</div>
-    <div class="field-label">Tên danh mục</div>
-    <input class="inp" id="bCatName" placeholder="vd: Đi chợ, Tiền thuê…">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="bCatIcon" placeholder="🛒" maxlength="2">
-    <div class="field-label">Giới hạn hàng tháng (AUD)</div>
-    <input type="number" class="inp" id="bCatLimit" placeholder="500">
-    <div class="modal-btns">
-      <button class="modal-btn btn-blue" onclick="saveBudgetCat()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('budgetModal')">Hủy</button>
-    </div>
-  </div>
+<!-- Balance -->
+<div class="balance-strip">
+  <div class="balance-card"><div class="balance-label">Thu nhập</div><div class="balance-val" style="color:#1dd1a1" id="bIncome">$0.00</div></div>
+  <div class="balance-card"><div class="balance-label">Đã chi</div><div class="balance-val" style="color:#ff6b6b" id="bExpense">$0.00</div></div>
+  <div class="balance-card"><div class="balance-label">Còn lại</div><div class="balance-val" id="bBalance">$0.00</div></div>
 </div>
 
-<!-- EDIT GOAL MODAL -->
-<div class="modal-bg hidden" id="editGoalModal">
-  <div class="modal">
-    <div class="modal-title">✏️ Sửa mục tiêu</div>
-    <div class="field-label">Tên mục tiêu</div>
-    <input class="inp" id="egName" placeholder="vd: Du lịch Melbourne">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="egIcon" placeholder="✈️" maxlength="2">
-    <div class="field-label">Số tiền cần (AUD)</div>
-    <input type="number" class="inp" id="egTarget" placeholder="2000">
-    <div class="field-label">Đã tiết kiệm (AUD)</div>
-    <input type="number" class="inp" id="egSaved" placeholder="0">
-    <div class="field-label">Deadline</div>
-    <input type="date" class="inp" id="egDeadline">
-    <div class="modal-btns">
-      <button class="modal-btn btn-green" onclick="saveEditGoal()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('editGoalModal')">Hủy</button>
-    </div>
+<!-- Progress -->
+<div class="progress-bar-wrap">
+  <div class="progress-row">
+    <span class="progress-label">Tổng ngân sách tháng</span>
+    <span class="progress-label" id="progLabel">$0 / $0</span>
   </div>
+  <div class="bar-bg"><div class="bar-fill" id="progBar" style="background:#00d2d3;width:0%"></div></div>
+  <div class="progress-sub" id="progSub"></div>
 </div>
 
-<!-- ADD GOAL MODAL -->
-<div class="modal-bg hidden" id="goalModal">
-  <div class="modal">
-    <div class="modal-title">🎯 Thêm mục tiêu tiết kiệm</div>
-    <div class="field-label">Tên mục tiêu</div>
-    <input class="inp" id="gName" placeholder="vd: Du lịch Melbourne">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="gIcon" placeholder="✈️" maxlength="2">
-    <div class="field-label">Số tiền cần (AUD)</div>
-    <input type="number" class="inp" id="gTarget" placeholder="2000">
-    <div class="field-label">Deadline</div>
-    <input type="date" class="inp" id="gDeadline">
-    <div class="modal-btns">
-      <button class="modal-btn btn-green" onclick="saveGoal()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('goalModal')">Hủy</button>
-    </div>
-  </div>
-</div>
-
-<!-- EDIT DEBT MODAL -->
-<div class="modal-bg hidden" id="editDebtModal">
-  <div class="modal">
-    <div class="modal-title">✏️ Sửa khoản nợ</div>
-    <div class="field-label">Tên khoản nợ</div>
-    <input class="inp" id="edName" placeholder="vd: Thẻ Visa">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="edIcon" placeholder="💳" maxlength="2">
-    <div class="field-label">Tổng nợ ban đầu (AUD)</div>
-    <input type="number" class="inp" id="edTotal" placeholder="10000">
-    <div class="field-label">Còn lại phải trả (AUD)</div>
-    <input type="number" class="inp" id="edRemaining" placeholder="8000">
-    <div class="field-label">Trả hàng tháng (AUD)</div>
-    <input type="number" class="inp" id="edMonthly" placeholder="350">
-    <div class="field-label">Deadline trả hết</div>
-    <input type="date" class="inp" id="edDeadline">
-    <div class="modal-btns">
-      <button class="modal-btn btn-red" onclick="saveEditDebt()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('editDebtModal')">Hủy</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD DEBT MODAL -->
-<div class="modal-bg hidden" id="debtModal">
-  <div class="modal">
-    <div class="modal-title">💳 Thêm khoản nợ</div>
-    <div class="field-label">Tên khoản nợ</div>
-    <input class="inp" id="dName" placeholder="vd: Thẻ Visa, Car loan…">
-    <div class="field-label">Emoji icon</div>
-    <input class="inp" id="dIcon" placeholder="💳" maxlength="2">
-    <div class="field-label">Tổng nợ ban đầu (AUD)</div>
-    <input type="number" class="inp" id="dTotal" placeholder="10000">
-    <div class="field-label">Trả hàng tháng (AUD)</div>
-    <input type="number" class="inp" id="dMonthly" placeholder="350">
-    <div class="field-label">Deadline trả hết</div>
-    <input type="date" class="inp" id="dDeadline">
-    <div class="modal-btns">
-      <button class="modal-btn btn-red" onclick="saveDebt()">Lưu</button>
-      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('debtModal')">Hủy</button>
-    </div>
-  </div>
-</div>
-
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-top">
-    <div class="logo">Tom's <span>Wallet</span></div>
-    <div class="month-badge" id="monthBadge">—</div>
-  </div>
-  <div class="sync-row">
-    <div class="sync-dot" id="syncDot"></div>
-    <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="syncLabel">SYNCING…</span>
-  </div>
-  <div class="link-box">
-    <div class="link-text" id="walletLink">—</div>
-    <button class="copy-btn" onclick="copyLink()">Copy</button>
-  </div>
-  <div style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:6px" id="walletId"></div>
-</div>
-
-<!-- BALANCE -->
-<div class="bal-grid">
-  <div class="bal-card"><div class="bal-label">Thu nhập tháng này</div><div class="bal-val" style="color:var(--green)" id="bIncome">$0</div></div>
-  <div class="bal-card"><div class="bal-label">Đã chi tiêu</div><div class="bal-val" style="color:var(--red)" id="bExpense">$0</div></div>
-  <div class="bal-card"><div class="bal-label">Còn lại tháng này</div><div class="bal-val" id="bBalance">$0</div></div>
-  <div class="bal-card"><div class="bal-label">Tổng nợ còn lại</div><div class="bal-val" style="color:var(--purple)" id="bDebt">$0</div></div>
-</div>
-
-<!-- ALERTS -->
-<div id="alertZone" style="padding:10px 14px 0"></div>
-
-<!-- TABS -->
+<!-- Tabs -->
 <div class="tabs">
-  <button class="tab active" onclick="showTab('budget',this)">💰 Ngân sách</button>
-  <button class="tab" onclick="showTab('log',this)">➕ Ghi</button>
-  <button class="tab" onclick="showTab('savings',this)">🎯 Tiết kiệm</button>
-  <button class="tab" onclick="showTab('debt',this)">💳 Nợ</button>
-  <button class="tab" onclick="showTab('history',this)">📋 Lịch sử</button>
+  <button class="tab-btn active" onclick="switchTab('dashboard',this)">📊 Ngân sách</button>
+  <button class="tab-btn" onclick="switchTab('add',this)">➕ Ghi</button>
+  <button class="tab-btn" onclick="switchTab('savings',this)">💰 Mục tiêu</button>
+  <button class="tab-btn" onclick="switchTab('history',this)">📋 Lịch sử</button>
 </div>
 
-<!-- BUDGET TAB -->
-<div class="content" id="tab-budget">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700">Ngân sách tháng này</div>
-    <button class="btn btn-blue" style="width:auto;padding:8px 14px;margin:0;font-size:12px" onclick="openModal('budgetModal')">+ Thêm</button>
-  </div>
-  <div id="budgetList"></div>
-  <div id="nextMonthAdj"></div>
-</div>
+<div class="content">
 
-<!-- LOG TAB -->
-<div class="content hidden" id="tab-log">
-  <div style="font-size:14px;font-weight:700;margin-bottom:14px">Ghi giao dịch</div>
-  <div class="type-toggle">
-    <button class="type-btn" id="btnExp" style="background:var(--red);color:#fff" onclick="setLogType('expense')">💸 Chi tiêu</button>
-    <button class="type-btn" id="btnInc" style="background:transparent;color:var(--muted)" onclick="setLogType('income')">💵 Thu nhập</button>
-  </div>
-  <div class="field-label">Số tiền (AUD)</div>
-  <div class="inp-prefix-wrap">
-    <span class="inp-prefix">$</span>
-    <input type="number" class="inp inp-big" id="lAmount" placeholder="0.00" oninput="updateLogPreview()">
-  </div>
-  <div id="catPickerSection">
-    <div class="field-label">Danh mục</div>
-    <div class="cat-grid" id="catPicker"></div>
-  </div>
-  <div class="field-label">Ghi chú (tùy chọn)</div>
-  <input class="inp" id="lNote" placeholder="vd: Woolworths, Maccas…">
-  <div class="field-label">Ngày</div>
-  <input type="date" class="inp" id="lDate">
-  <div id="logPreview" class="hidden alert alert-blue" style="margin-bottom:14px"></div>
-  <button class="btn btn-blue" id="logSubmitBtn" onclick="submitLog()">💸 Lưu chi tiêu</button>
-</div>
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard"><div id="dashboardContent"></div></div>
 
-<!-- SAVINGS TAB -->
-<div class="content hidden" id="tab-savings">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700">Mục tiêu tiết kiệm</div>
-    <button class="btn btn-green" style="width:auto;padding:8px 14px;margin:0;font-size:12px" onclick="openModal('goalModal')">+ Thêm</button>
-  </div>
-  <div id="goalList"></div>
-  <div id="addToGoalSection" class="hidden" style="margin-top:8px">
-    <div class="field-label">Thêm tiền vào mục tiêu đang chọn</div>
-    <div class="inp-prefix-wrap">
-      <span class="inp-prefix">$</span>
-      <input type="number" class="inp inp-big" id="gAddAmt" placeholder="0.00">
+  <!-- ADD -->
+  <div id="tab-add" class="hidden">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:16px">Ghi giao dịch</div>
+    <div class="type-toggle">
+      <button class="type-btn" id="btnExpense" onclick="setType('expense')">💸 Chi tiêu</button>
+      <button class="type-btn" id="btnIncome" onclick="setType('income')">💵 Thu nhập</button>
     </div>
-    <button class="btn btn-green" onclick="addToGoal()">💰 Thêm vào tiết kiệm</button>
-  </div>
-</div>
-
-<!-- DEBT TAB -->
-<div class="content hidden" id="tab-debt">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700">Quản lý nợ</div>
-    <button class="btn btn-red" style="width:auto;padding:8px 14px;margin:0;font-size:12px" onclick="openModal('debtModal')">+ Thêm</button>
-  </div>
-  <div id="debtList"></div>
-  <div id="addPaymentSection" class="hidden" style="margin-top:8px">
-    <div class="field-label">Ghi thanh toán nợ đang chọn</div>
-    <div class="inp-prefix-wrap">
-      <span class="inp-prefix">$</span>
-      <input type="number" class="inp inp-big" id="dPayAmt" placeholder="0.00">
+    <div class="field-label">Số tiền (AUD)</div>
+    <div class="amount-wrap">
+      <span class="amount-prefix">$</span>
+      <input type="number" class="amount-input" id="fAmount" placeholder="0.00" oninput="updatePreview()">
     </div>
-    <button class="btn btn-red" onclick="payDebt()">💳 Ghi thanh toán</button>
+    <div id="catSection">
+      <div class="field-label">Danh mục</div>
+      <div id="catGrid"></div>
+    </div>
+    <div class="field-label">Ghi chú (tùy chọn)</div>
+    <input type="text" class="text-input" id="fNote" placeholder="vd: Woolworths, Maccas, tiền thuê…">
+    <div class="field-label">Ngày</div>
+    <input type="date" class="date-input" id="fDate">
+    <div id="previewBox" class="hidden preview-box"></div>
+    <button class="submit-btn" id="submitBtn" onclick="addTxn()">💸 Lưu chi tiêu</button>
   </div>
+
+  <!-- SAVINGS -->
+  <div id="tab-savings" class="hidden">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:16px">Mục tiêu tiết kiệm</div>
+    <div class="saving-goal-grid" id="goalBtns"></div>
+    <div class="field-label">Số tiền thêm vào (AUD)</div>
+    <div class="amount-wrap">
+      <span class="amount-prefix">$</span>
+      <input type="number" class="amount-input" id="sAmount" placeholder="0.00">
+    </div>
+    <div class="field-label">Ngày</div>
+    <input type="date" class="date-input" id="sDate">
+    <button class="submit-btn" style="background:#1dd1a1;color:#0a0c0f" onclick="addSaving()">💰 Thêm vào tiết kiệm</button>
+    <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:700;margin-bottom:12px">Tiến độ các mục tiêu</div>
+    <div id="goalCards"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="hidden">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:4px">Lịch sử giao dịch</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478;margin-bottom:14px;text-transform:uppercase;letter-spacing:.1em" id="txnCount"></div>
+    <div id="historyList"></div>
+  </div>
+
 </div>
 
-<!-- HISTORY TAB -->
-<div class="content hidden" id="tab-history">
-  <div style="font-size:14px;font-weight:700;margin-bottom:10px">Lịch sử giao dịch</div>
-  <div style="overflow-x:auto;white-space:nowrap;margin-bottom:12px;padding-bottom:4px" id="monthFilterRow"></div>
-  <div id="historyList"></div>
-</div>
-
-<div class="footer-bar">TOM'S WALLET · REALTIME SYNC · <span id="footerWallet"></span></div>
+<div class="footer">✓ LƯU TỰ ĐỘNG · KHÔNG MẤT KHI ĐÓNG TAB</div>
 
 <script>
-// ══ STATE ══
-let DATA = null, synced = false;
-let curLogType = "expense", curCat = null, curGoalKey = null, curDebtKey = null, pendingTxn = null;
-let editingBudgetKey = null, editingGoalKey = null, editingDebtKey = null;
-let historyMonth = null;
-
-// ══ HELPERS ══
-const fmt   = n => "$"+Math.abs(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
-const today = () => new Date().toISOString().slice(0,10);
-const mk    = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
-const fmtMonthLabel = key => { const [y,m]=key.split("-"); const names=["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"]; return `${names[+m-1]}/${y}`; };
-const fmtDate = iso => { if(!iso)return"—"; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; };
-
-// ══ REALTIME CLOCK ══
-function updateClock() {
-  const d = new Date();
-  const months = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"];
-  document.getElementById("monthBadge").textContent = `${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-updateClock();
-setInterval(updateClock, 60000);
-
-// ══ DEFAULT DATA ══
-window._defaultData = () => ({
-  budgetCats:{
-    rent:     {name:"Tiền thuê nhà",icon:"🏠",limit:975},
-    utilities:{name:"Tiện ích",     icon:"⚡",limit:390},
-    groceries:{name:"Đi chợ",       icon:"🛒",limit:346},
-    dining:   {name:"Ăn ngoài",     icon:"🍜",limit:217},
-    family:   {name:"Hỗ trợ gia đình",icon:"👨‍👩‍👧",limit:550},
-    misc:     {name:"Linh tinh",    icon:"📦",limit:100},
-  },
-  goals:{}, debts:{}, txns:[], budgetAdj:{}
-});
-
-// ══ FIREBASE ══
-window._onRemoteData = d => {
-  DATA = d; synced = true;
-  document.getElementById("syncDot").style.background = "var(--green)";
-  document.getElementById("syncLabel").textContent    = "SYNCED";
-  document.getElementById("footerWallet").textContent = "ID: "+(document.getElementById("walletId").textContent||"");
-  if (!historyMonth) historyMonth = mk();
-  render();
+const BUDGET = {
+  "Tiền thuê nhà":     {limit:975,  color:"#6ab04c", icon:"🏠", group:"fixed"},
+  "Tiện ích":          {limit:390,  color:"#74b9ff", icon:"⚡", group:"fixed"},
+  "Bảo hiểm y tế":    {limit:160,  color:"#fd79a8", icon:"🏥", group:"fixed"},
+  "Điện thoại":        {limit:35,   color:"#a29bfe", icon:"📱", group:"fixed"},
+  "Đi chợ":           {limit:346,  color:"#54a0ff", icon:"🛒", group:"living"},
+  "Ăn ngoài":         {limit:217,  color:"#ffa502", icon:"🍜", group:"living"},
+  "Phòng gym":        {limit:90,   color:"#00cec9", icon:"💪", group:"living"},
+  "Đăng ký dịch vụ":  {limit:60,   color:"#e17055", icon:"📺", group:"living"},
+  "Chăm sóc cá nhân": {limit:50,   color:"#fdcb6e", icon:"✂️", group:"living"},
+  "Di chuyển":        {limit:40,   color:"#eccc68", icon:"🚗", group:"living"},
+  "Hỗ trợ gia đình":  {limit:550,  color:"#e17055", icon:"👨‍👩‍👧", group:"living"},
+  "Thẻ tín dụng":     {limit:350,  color:"#ff4757", icon:"💳", group:"debt"},
+  "Zip Pay":          {limit:50,   color:"#ff6b81", icon:"🤐", group:"debt"},
+  "Linh tinh":        {limit:100,  color:"#b2bec3", icon:"📦", group:"living"},
 };
-setTimeout(()=>{
-  if (!synced) {
-    const raw = localStorage.getItem("tw_data");
-    DATA = raw ? JSON.parse(raw) : window._defaultData();
-    window._saveDB = d => localStorage.setItem("tw_data",JSON.stringify(d));
-    document.getElementById("syncDot").style.background = "var(--yellow)";
-    document.getElementById("syncLabel").textContent    = "LOCAL ONLY";
-    if (!historyMonth) historyMonth = mk();
-    render();
-  }
-},3500);
-function saveData() { if(window._saveDB) window._saveDB(DATA); }
 
-// ══ RENDER ══
-function render() {
-  if (!DATA) return;
-  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderHistory(); renderAlerts();
+const GROUPS = {
+  fixed:  {label:"Chi phí cố định",      color:"#6ab04c"},
+  living: {label:"Sinh hoạt & Giải trí", color:"#54a0ff"},
+  debt:   {label:"Trả nợ",               color:"#ff4757"},
+};
+
+// Default goals with start date + deadline
+const DEFAULT_GOALS = [
+  {key:"melbourne", label:"Chuyến Melbourne ✈️", target:2000,  color:"#54a0ff", icon:"✈️", startDate:"2026-06-01", deadline:"2026-12-31"},
+  {key:"car",       label:"Trả xe 🚗",           target:11000, color:"#ffa502", icon:"🚗", startDate:"2026-06-01", deadline:"2027-06-30"},
+  {key:"ring",      label:"Nhẫn cưới 💍",         target:8000,  color:"#fd79a8", icon:"💍", startDate:"2027-07-01", deadline:"2027-12-31"},
+  {key:"visa",      label:"Phí visa 🛂",          target:10000, color:"#a29bfe", icon:"🛂", startDate:"2026-06-01", deadline:"2027-12-31"},
+];
+
+const TOTAL_BUDGET   = Object.values(BUDGET).reduce((s,b)=>s+b.limit,0);
+const MONTHLY_INCOME = 5417;
+const LS_T = "vanmoney_txns";
+const LS_S = "vanmoney_savings";
+const LS_G = "vanmoney_goals";
+
+let txns    = JSON.parse(localStorage.getItem(LS_T)||"[]");
+let savings = JSON.parse(localStorage.getItem(LS_S)||"{}");
+let goals   = JSON.parse(localStorage.getItem(LS_G)||JSON.stringify(DEFAULT_GOALS));
+// init savings keys
+goals.forEach(g=>{ if(savings[g.key]===undefined) savings[g.key]=0; });
+
+let curType="expense", curCat="Tiền thuê nhà", curGoal=goals[0].key;
+let pendingAmt=0, pendingCat="", pendingNote="", pendingDate="";
+
+const fmt    = n=>"$"+Math.abs(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+const today  = ()=>new Date().toISOString().slice(0,10);
+const getMK  = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
+const getML  = ()=>{const d=new Date();return `Tháng ${d.getMonth()+1}/${d.getFullYear()} · Tự do tài chính năm 40 tuổi`;};
+const save   = ()=>{localStorage.setItem(LS_T,JSON.stringify(txns));localStorage.setItem(LS_S,JSON.stringify(savings));localStorage.setItem(LS_G,JSON.stringify(goals));};
+
+function showToast(msg,type="ok"){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.style.background=type==="err"?"#c0392b":type==="warn"?"#e67e22":"#27ae60";
+  t.style.display="block";
+  setTimeout(()=>t.style.display="none",3500);
 }
 
-function monthSpend(mkey) {
-  const m = mkey||mk(), sp={};
-  (DATA.txns||[]).filter(t=>t.monthKey===m&&t.type==="expense").forEach(t=>{ sp[t.cat]=(sp[t.cat]||0)+t.amount; });
-  return sp;
+// Calculate target amount for a goal as of today
+function calcTarget(goal) {
+  const start = new Date(goal.startDate);
+  const end   = new Date(goal.deadline);
+  const now   = new Date();
+  if (now <= start) return 0;
+  if (now >= end)   return goal.target;
+  const totalDays   = (end - start) / 86400000;
+  const elapsedDays = (now - start) / 86400000;
+  return (elapsedDays / totalDays) * goal.target;
 }
 
-function renderHeader() {
-  const m=mk(), txns=DATA.txns||[];
-  const income  = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense = txns.filter(t=>t.monthKey===m&&t.type==="expense").reduce((s,t)=>s+t.amount,0);
-  const bal = income-expense;
-  const totalDebt = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
-  document.getElementById("bIncome").textContent  = fmt(income);
-  document.getElementById("bExpense").textContent = fmt(expense);
-  const bb = document.getElementById("bBalance");
-  bb.textContent = (bal>=0?"+":"-")+fmt(bal);
-  bb.style.color = bal>=0?"var(--green)":"var(--red)";
-  document.getElementById("bDebt").textContent = fmt(totalDebt);
+function getMonthData(){
+  const mk=getMK();
+  const mt=txns.filter(t=>t.monthKey===mk&&t.type==="expense");
+  const mi=txns.filter(t=>t.monthKey===mk&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+  const me=mt.reduce((s,t)=>s+t.amount,0);
+  const sp={};
+  mt.forEach(t=>{sp[t.category]=(sp[t.category]||0)+t.amount;});
+  return{mi,me,sp,mk};
 }
 
-function renderBudget() {
-  const sp=monthSpend(), m=mk(), adj=(DATA.budgetAdj||{})[m]||{};
-  const cats=DATA.budgetCats||{};
+function render(){
+  const{mi,me,sp}=getMonthData();
+  // Include savings transfers as expenses for balance calculation
+  const savingsTxns = txns.filter(t=>t.monthKey===getMK()&&t.type==="saving");
+  const totalOut = me + savingsTxns.reduce((s,t)=>s+t.amount,0);
+  const bal = mi - totalOut;
+
+  document.getElementById("monthLabel").textContent=getML();
+  document.getElementById("bIncome").textContent=fmt(mi);
+  document.getElementById("bExpense").textContent=fmt(totalOut);
+  const bb=document.getElementById("bBalance");
+  bb.textContent=(bal>=0?"+":"−")+fmt(bal);
+  bb.style.color=bal>=0?"#00d2d3":"#ff4757";
+
+  const pct=Math.min((me/TOTAL_BUDGET)*100,100);
+  document.getElementById("progLabel").textContent=`${fmt(me)} / ${fmt(TOTAL_BUDGET)}`;
+  document.getElementById("progBar").style.width=pct+"%";
+  document.getElementById("progBar").style.background=me>TOTAL_BUDGET?"#ff4757":"#00d2d3";
+  document.getElementById("progSub").textContent=`Còn ${fmt(Math.max(TOTAL_BUDGET-me,0))} trong ngân sách · Mục tiêu tiết kiệm: ${fmt(MONTHLY_INCOME-TOTAL_BUDGET)}/tháng`;
+  document.getElementById("statusText").textContent=`LƯU TỰ ĐỘNG · ${txns.length} GIAO DỊCH · KHÔNG MẤT KHI ĐÓNG TAB`;
+
+  renderDashboard(sp);
+  renderHistory();
+  renderGoalCards();
+}
+
+function renderDashboard(sp){
   let html="";
-  Object.entries(cats).forEach(([k,c])=>{
-    const limit=c.limit+(adj[k]||0), spent=sp[k]||0;
-    const pct=Math.min((spent/limit)*100,100), over=spent>limit, warn=spent>limit*.8;
-    html+=`<div class="card">
-      <div class="card-top">
-        <div class="card-name">${c.icon} ${c.name}
-          ${over?'<span class="badge badge-red">VƯỢT</span>':warn?'<span class="badge badge-yellow">GẦN HẾT</span>':""}
+  for(const[gk,group]of Object.entries(GROUPS)){
+    const cats=Object.entries(BUDGET).filter(([,v])=>v.group===gk);
+    const gTotal=cats.reduce((s,[,v])=>s+v.limit,0);
+    const gSpent=cats.reduce((s,[k])=>s+(sp[k]||0),0);
+    html+=`<div class="group-wrap"><div class="group-header"><div class="group-title" style="color:${group.color}">${group.label}</div><div class="group-total">${fmt(gSpent)} / ${fmt(gTotal)}</div></div>`;
+    for(const[cat,{limit,color,icon}]of cats){
+      const spent=sp[cat]||0,pct=Math.min((spent/limit)*100,100),over=spent>limit,warn=spent>limit*.8;
+      html+=`<div class="cat-card ${over?"over":warn?"warn":""}">
+        <div class="cat-top">
+          <div class="cat-name">${icon} ${cat}${over?'<span class="badge badge-over">VƯỢT</span>':warn?'<span class="badge badge-warn">GẦN HẾT</span>':""}</div>
+          <div class="cat-amt"><span style="color:${over?"#ff4757":warn?"#ffa502":"#dde3ee"}">${fmt(spent)}</span><span style="color:#5a6478"> / ${fmt(limit)}</span></div>
         </div>
-        <div class="card-amt">
-          <div style="color:${over?"var(--red)":warn?"var(--yellow)":"var(--text)"}">${fmt(spent)}</div>
-          <div style="color:var(--muted);font-size:10px">/ ${fmt(limit)}</div>
-        </div>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${over?"var(--red)":warn?"var(--yellow)":"var(--accent)"}"></div></div>
-      <div class="card-sub"><span>${over?"Vượt "+fmt(spent-limit):"Còn "+fmt(limit-spent)}</span></div>
-      <div class="card-actions">
-        <button class="act-btn edit" onclick="openEditBudget('${k}')">✏️ Sửa</button>
-        <button class="act-btn del" onclick="deleteBudgetCat('${k}')">🗑 Xóa</button>
-      </div>
-    </div>`;
-  });
-  if (!Object.keys(cats).length) html=`<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Chưa có danh mục.<br>Nhấn + Thêm để bắt đầu.</div>`;
-  document.getElementById("budgetList").innerHTML=html;
-  renderNextMonthAdj(sp);
-}
-
-function renderNextMonthAdj(sp) {
-  const cats=DATA.budgetCats||{};
-  const overCats=Object.entries(cats).filter(([k,c])=>(sp[k]||0)>c.limit);
-  const el=document.getElementById("nextMonthAdj");
-  if (!overCats.length){el.innerHTML="";return;}
-  let html=`<div class="alert alert-yellow" style="margin-top:4px">
-    <div style="font-weight:700;margin-bottom:8px">📊 Suggested adjustment for next month</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Overspend this month is deducted from next month's budget to keep you on track.</div>`;
-  overCats.forEach(([k,c])=>{
-    const over=(sp[k]||0)-c.limit;
-    const nextLimit=Math.max(0, c.limit-over);
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px">
-      <span>${c.icon} ${c.name}</span>
-      <span style="text-align:right">
-        <span style="color:var(--muted);text-decoration:line-through">${fmt(c.limit)}</span>
-        <span style="color:var(--yellow);margin-left:6px">→ ${fmt(nextLimit)}</span>
-      </span>
-    </div>`;
-  });
-  html+=`<button class="btn btn-ghost" style="margin-top:8px;padding:10px;font-size:12px" onclick="applyNextMonthAdj()">✅ Apply to next month</button></div>`;
-  el.innerHTML=html;
-}
-
-function applyNextMonthAdj() {
-  const sp=monthSpend(), cats=DATA.budgetCats||{};
-  const d=new Date(); d.setMonth(d.getMonth()+1);
-  const nm=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-  if (!DATA.budgetAdj) DATA.budgetAdj={};
-  DATA.budgetAdj[nm]={};
-  Object.entries(cats).forEach(([k,c])=>{
-    const over=(sp[k]||0)-c.limit;
-    if (over>0) {
-      // Cut next month by the overspend amount to balance it out
-      const nextLimit=Math.max(0, c.limit-over);
-      DATA.budgetAdj[nm][k]=nextLimit-c.limit; // store as delta (negative)
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${over?"#c0392b":warn?"#e67e22":color}"></div></div>
+        <div class="cat-remaining">Còn ${fmt(Math.max(limit-spent,0))} trong tháng này</div>
+      </div>`;
     }
-  });
-  saveData(); showToast("Next month's budget adjusted ✓");
-}
-
-function renderGoals() {
-  const goals=DATA.goals||{};
-  let html="";
-  Object.entries(goals).forEach(([k,g])=>{
-    const pct=Math.min(((g.saved||0)/g.target)*100,100), done=(g.saved||0)>=g.target;
-    const deadlineStr = g.deadline ? fmtDate(g.deadline) : "—";
-    html+=`<div class="card" style="cursor:pointer;border-color:${curGoalKey===k?"var(--green)":"var(--border)"}" onclick="selectGoal('${k}')">
-      <div class="card-top">
-        <div class="card-name">${g.icon} ${g.name} ${done?'<span class="badge badge-green">DONE ✓</span>':''}</div>
-        <div class="card-amt"><div style="color:var(--green)">${fmt(g.saved||0)}</div><div style="color:var(--muted);font-size:10px">/ ${fmt(g.target)}</div></div>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:var(--green)"></div></div>
-      <div class="card-sub"><span>${pct.toFixed(1)}% · Hạn ${deadlineStr}</span><span style="color:var(--green)">Còn ${fmt(g.target-(g.saved||0))}</span></div>
-      <div class="card-actions">
-        <button class="act-btn edit" onclick="event.stopPropagation();openEditGoal('${k}')">✏️ Sửa</button>
-        <button class="act-btn del" onclick="event.stopPropagation();deleteGoal('${k}')">🗑 Xóa</button>
-      </div>
-    </div>`;
-  });
-  if (!Object.keys(goals).length) html=`<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Chưa có mục tiêu.<br>Nhấn + Thêm để bắt đầu.</div>`;
-  document.getElementById("goalList").innerHTML=html;
-  document.getElementById("addToGoalSection").classList.toggle("hidden",!curGoalKey);
-}
-
-function renderDebts() {
-  const debts=DATA.debts||{};
-  let html="";
-  Object.entries(debts).forEach(([k,d])=>{
-    const remaining=d.remaining??d.total, pct=Math.min(((d.total-remaining)/d.total)*100,100), done=remaining<=0;
-    const deadlineStr = d.deadline ? fmtDate(d.deadline) : "—";
-    html+=`<div class="card" style="cursor:pointer;border-color:${curDebtKey===k?"var(--red)":"var(--border)"}" onclick="selectDebt('${k}')">
-      <div class="card-top">
-        <div class="card-name">${d.icon} ${d.name} ${done?'<span class="badge badge-green">PAID ✓</span>':''}</div>
-        <div class="card-amt"><div style="color:var(--red)">${fmt(remaining)}</div><div style="color:var(--muted);font-size:10px">còn lại / ${fmt(d.total)}</div></div>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:var(--purple)"></div></div>
-      <div class="card-sub"><span>${pct.toFixed(1)}% đã trả · ${fmt(d.monthly)}/tháng · Hạn ${deadlineStr}</span></div>
-      <div class="card-actions">
-        <button class="act-btn edit" onclick="event.stopPropagation();openEditDebt('${k}')">✏️ Sửa</button>
-        <button class="act-btn del" onclick="event.stopPropagation();deleteDebt('${k}')">🗑 Xóa</button>
-      </div>
-    </div>`;
-  });
-  if (!Object.keys(debts).length) html=`<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Chưa có khoản nợ.<br>Nhấn + Thêm để bắt đầu.</div>`;
-  document.getElementById("debtList").innerHTML=html;
-  document.getElementById("addPaymentSection").classList.toggle("hidden",!curDebtKey);
-}
-
-function renderHistory() {
-  // Build month filter buttons
-  const allMonths=[...new Set((DATA.txns||[]).map(t=>t.monthKey))].sort().reverse();
-  if (!allMonths.includes(mk())) allMonths.unshift(mk());
-  if (!historyMonth || !allMonths.includes(historyMonth)) historyMonth=allMonths[0]||mk();
-
-  document.getElementById("monthFilterRow").innerHTML = allMonths.map(m=>
-    `<button class="month-hist-btn ${historyMonth===m?"active":""}" onclick="setHistoryMonth('${m}')">${fmtMonthLabel(m)}</button> `
-  ).join("");
-
-  const txns=(DATA.txns||[]).filter(t=>t.monthKey===historyMonth).slice().reverse();
-  if (!txns.length){
-    document.getElementById("historyList").innerHTML=`<div style="text-align:center;color:var(--muted);padding:40px;font-size:13px">Chưa có giao dịch tháng này.</div>`;
-    return;
+    html+="</div>";
   }
-  document.getElementById("historyList").innerHTML=txns.map(t=>{
-    const isInc=t.type==="income";
-    const icon=isInc?"💵":(DATA.budgetCats?.[t.cat]?.icon||"💸");
-    const col=isInc?"var(--green)":"var(--red)";
-    const catName=isInc?"Thu nhập":(DATA.budgetCats?.[t.cat]?.name||t.cat||"Chi tiêu");
-    return `<div class="txn">
-      <div class="txn-icon" style="background:${isInc?"#064e3b":"#7f1d1d"}">${icon}</div>
-      <div class="txn-info">
-        <div class="txn-name">${catName}${t.note?" — "+t.note:""}</div>
-        <div class="txn-meta">${t.date}</div>
+  document.getElementById("dashboardContent").innerHTML=html;
+}
+
+function renderGoalCards(){
+  // Goal selector buttons
+  document.getElementById("goalBtns").innerHTML=goals.map(g=>`
+    <button class="saving-goal-btn" onclick="selectGoal('${g.key}')"
+      style="border-color:${curGoal===g.key?g.color:"#252a35"};background:${curGoal===g.key?g.color+"22":"#12151a"};color:${curGoal===g.key?g.color:"#8090a0"}">
+      ${g.label}<br><span style="font-size:9px;opacity:.7">Hạn ${g.deadline}</span>
+    </button>`).join("");
+
+  // Goal detail cards
+  document.getElementById("goalCards").innerHTML=goals.map(g=>{
+    const saved   = savings[g.key]||0;
+    const pct     = Math.min((saved/g.target)*100,100);
+    const targetAmt = calcTarget(g);
+    const targetPct = Math.min((targetAmt/g.target)*100,100);
+    const ahead   = saved >= targetAmt;
+    const diff    = Math.abs(saved - targetAmt);
+    const statusClass = ahead ? "status-ahead" : "status-behind";
+    const statusText  = ahead ? `▲ Vượt ${fmt(diff)}` : `▼ Còn thiếu ${fmt(diff)}`;
+
+    return `<div class="goal-card" style="border:1px solid ${g.color}44">
+      <div class="goal-top">
+        <div>
+          <div class="goal-name">${g.label}</div>
+          <div class="deadline-edit">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a6478">Hạn:</span>
+            <input type="date" class="deadline-input" value="${g.deadline}" onchange="updateDeadline('${g.key}',this.value)">
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="goal-pct" style="color:${g.color}">${pct.toFixed(1)}%</div>
+          <div class="goal-status ${statusClass}" style="margin-top:4px">${statusText}</div>
+        </div>
       </div>
-      <div class="txn-amt" style="color:${col}">${isInc?"+":"−"}${fmt(t.amount)}</div>
-      <button class="del-btn" onclick="deleteTxn('${t.id}')">×</button>
+
+      <!-- Progress bar with target marker -->
+      <div class="goal-bar-wrap">
+        <div class="goal-bar-bg">
+          <div class="goal-bar-fill" style="width:${pct}%;background:${g.color}"></div>
+          <!-- Target marker -->
+          <div class="target-marker" style="left:${targetPct}%;background:${ahead?"#1dd1a1":"#ff6b6b"}">
+            <div class="target-marker-label" style="color:${ahead?"#1dd1a1":"#ff6b6b"}">🎯 ${fmt(targetAmt)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="goal-row">
+        <span style="color:${g.color}">Đã tiết kiệm ${fmt(saved)}</span>
+        <span style="color:#5a6478">Mục tiêu ${fmt(g.target)}</span>
+      </div>
+      <div class="goal-row" style="margin-top:4px">
+        <span style="color:#5a6478">Còn ${fmt(Math.max(g.target-saved,0))}</span>
+        <span style="color:#5a6478">Hôm nay nên có ${fmt(targetAmt)}</span>
+      </div>
     </div>`;
   }).join("");
 }
 
-function renderAlerts() {
-  const sp=monthSpend(), cats=DATA.budgetCats||{};
-  const alerts=[];
-  Object.entries(cats).forEach(([k,c])=>{
-    const spent=sp[k]||0,limit=c.limit;
-    if (spent>limit) alerts.push(`<div class="alert alert-red">⚠️ <b>${c.name}</b> vượt ngân sách ${fmt(spent-limit)} tháng này.</div>`);
-    else if (spent>limit*.85) alerts.push(`<div class="alert alert-yellow">🔔 <b>${c.name}</b> đã dùng ${Math.round(spent/limit*100)}% ngân sách.</div>`);
-  });
-  document.getElementById("alertZone").innerHTML=alerts.slice(0,3).join("");
+function updateDeadline(key, val){
+  const g=goals.find(g=>g.key===key);
+  if(g){ g.deadline=val; save(); renderGoalCards(); showToast("Đã cập nhật hạn chót ✓"); }
 }
 
-// ══ TABS ══
-function showTab(name,btn) {
-  ["budget","log","savings","debt","history"].forEach(t=>{
+function renderHistory(){
+  document.getElementById("txnCount").textContent=`Tổng ${txns.length} giao dịch`;
+  const list=document.getElementById("historyList");
+  if(!txns.length){list.innerHTML=`<div style="text-align:center;color:#5a6478;font-size:13px;padding:40px 0;line-height:2">Chưa có giao dịch nào.<br>Bắt đầu ghi từ tab ➕ nhé!</div>`;return;}
+  list.innerHTML=txns.map(t=>{
+    const isSaving = t.type==="saving";
+    const isIncome = t.type==="income";
+    const icon = isSaving?"💰":isIncome?"💵":(BUDGET[t.category]?.icon||"💸");
+    const bg   = isIncome?"#1dd1a122":isSaving?"#a29bfe22":"#ff6b6b22";
+    const col  = isIncome?"#1dd1a1":isSaving?"#a29bfe":"#ff6b6b";
+    const sign = isIncome?"+":"−";
+    const label= isSaving?`Tiết kiệm → ${t.goalLabel||t.category}`:t.category;
+    return `<div class="txn-item">
+      <div class="txn-icon" style="background:${bg}">${icon}</div>
+      <div class="txn-info">
+        <div class="txn-name">${label}${t.note?" — "+t.note:""}</div>
+        <div class="txn-date">${t.date} · ${t.monthKey}</div>
+      </div>
+      <div class="txn-amt" style="color:${col}">${sign}${fmt(t.amount)}</div>
+      <button class="del-btn" onclick="deleteTxn(${t.id})">×</button>
+    </div>`;
+  }).join("");
+}
+
+function switchTab(name,btn){
+  ["dashboard","add","savings","history"].forEach(t=>{
     document.getElementById("tab-"+t).classList.toggle("hidden",t!==name);
   });
-  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
-  if (name==="log"){document.getElementById("lDate").value=today();buildCatPicker();}
-}
-function setHistoryMonth(m){historyMonth=m;renderHistory();}
-
-// ══ LOG ══
-function setLogType(type) {
-  curLogType=type;
-  document.getElementById("btnExp").style.background=type==="expense"?"var(--red)":"transparent";
-  document.getElementById("btnExp").style.color=type==="expense"?"#fff":"var(--muted)";
-  document.getElementById("btnInc").style.background=type==="income"?"var(--green)":"transparent";
-  document.getElementById("btnInc").style.color=type==="income"?"#fff":"var(--muted)";
-  document.getElementById("catPickerSection").classList.toggle("hidden",type==="income");
-  document.getElementById("logSubmitBtn").textContent=type==="income"?"💵 Lưu thu nhập":"💸 Lưu chi tiêu";
-  document.getElementById("logSubmitBtn").style.background=type==="income"?"var(--green)":"var(--accent)";
-  document.getElementById("logPreview").classList.add("hidden");
+  if(name==="add"){buildCatGrid();document.getElementById("fDate").value=today();}
+  if(name==="savings"){document.getElementById("sDate").value=today();renderGoalCards();}
 }
 
-function buildCatPicker() {
-  const cats=DATA?.budgetCats||{};
-  document.getElementById("catPicker").innerHTML=Object.entries(cats).map(([k,c])=>
-    `<button class="cat-btn ${curCat===k?"active":""}" onclick="selectCat('${k}')">${c.icon} ${c.name}</button>`
-  ).join("")||`<div style="color:var(--muted);font-size:12px;grid-column:span 2">Thêm danh mục trong tab 💰 trước.</div>`;
+function setType(type){
+  curType=type;
+  document.getElementById("btnExpense").style.background=type==="expense"?"#ff6b6b":"transparent";
+  document.getElementById("btnExpense").style.color=type==="expense"?"#0a0c0f":"#5a6478";
+  document.getElementById("btnIncome").style.background=type==="income"?"#1dd1a1":"transparent";
+  document.getElementById("btnIncome").style.color=type==="income"?"#0a0c0f":"#5a6478";
+  document.getElementById("catSection").style.display=type==="expense"?"block":"none";
+  document.getElementById("submitBtn").textContent=type==="income"?"💵 Lưu thu nhập":"💸 Lưu chi tiêu";
+  document.getElementById("submitBtn").style.background=type==="income"?"#1dd1a1":"#00d2d3";
+  document.getElementById("submitBtn").style.color="#0a0c0f";
+  document.getElementById("previewBox").classList.add("hidden");
 }
 
-function selectCat(k){curCat=k;buildCatPicker();updateLogPreview();}
+function selectCat(cat){curCat=cat;buildCatGrid();updatePreview();}
+function selectGoal(key){curGoal=key;renderGoalCards();}
 
-function updateLogPreview() {
-  if (curLogType!=="expense"||!curCat)return;
-  const amt=parseFloat(document.getElementById("lAmount").value)||0;
-  if (!amt){document.getElementById("logPreview").classList.add("hidden");return;}
-  const sp=monthSpend(),c=DATA.budgetCats[curCat];
-  if (!c)return;
-  const spent=sp[curCat]||0,limit=c.limit,newT=spent+amt,over=newT>limit;
-  document.getElementById("logPreview").className="alert "+(over?"alert-red":"alert-blue");
-  document.getElementById("logPreview").classList.remove("hidden");
-  document.getElementById("logPreview").innerHTML=`Sau khi chi: <b>${fmt(newT)}</b> / ${fmt(limit)} ${over?"⚠️ Vượt "+fmt(newT-limit):"· Còn "+fmt(limit-newT)}`;
-}
-
-function submitLog() {
-  const amt=parseFloat(document.getElementById("lAmount").value);
-  if (!amt||amt<=0){showToast("Nhập số tiền hợp lệ","err");return;}
-  const note=document.getElementById("lNote").value;
-  const date=document.getElementById("lDate").value||today();
-  if (curLogType==="expense"){
-    if (!curCat){showToast("Chọn danh mục","err");return;}
-    const sp=monthSpend(),c=DATA.budgetCats[curCat];
-    const spent=sp[curCat]||0,limit=c?.limit||0,newT=spent+amt;
-    if (newT>limit){
-      pendingTxn={type:"expense",amount:amt,cat:curCat,note,date};
-      document.getElementById("warnMsg").innerHTML=`<b>${c?.icon} ${c?.name}</b> sẽ vượt ngân sách <b>${fmt(newT-limit)}</b>.<br><br>Vẫn muốn ghi?`;
-      openModal("warnModal");return;
-    }
+function buildCatGrid(){
+  let html="";
+  for(const[gk,group]of Object.entries(GROUPS)){
+    const cats=Object.entries(BUDGET).filter(([,v])=>v.group===gk);
+    html+=`<div class="cat-grid-group"><div class="cat-grid-label" style="color:${group.color}">${group.label}</div><div class="cat-grid">`;
+    html+=cats.map(([cat,{color,icon}])=>`
+      <button class="cat-btn" onclick="selectCat('${cat}')"
+        style="${curCat===cat?`border-color:${color};background:${color}22;color:${color}`:""}">
+        ${icon} ${cat}
+      </button>`).join("");
+    html+="</div></div>";
   }
-  commitTxn(curLogType==="income"?{type:"income",amount:amt,cat:"income",note,date}:{type:"expense",amount:amt,cat:curCat,note,date});
+  document.getElementById("catGrid").innerHTML=html;
 }
 
-function confirmOver(){closeModal("warnModal");if(pendingTxn){commitTxn(pendingTxn);pendingTxn=null;}}
-
-function commitTxn(t) {
-  if (!DATA.txns) DATA.txns=[];
-  DATA.txns.push({...t,id:Date.now().toString(),monthKey:mk()});
-  saveData();render();
-  document.getElementById("lAmount").value="";
-  document.getElementById("lNote").value="";
-  document.getElementById("logPreview").classList.add("hidden");
-  showToast(t.type==="income"?`+${fmt(t.amount)} thu nhập lưu ✓`:`-${fmt(t.amount)} chi tiêu lưu ✓`);
+function updatePreview(){
+  if(curType!=="expense"){document.getElementById("previewBox").classList.add("hidden");return;}
+  const amt=parseFloat(document.getElementById("fAmount").value)||0;
+  if(!amt){document.getElementById("previewBox").classList.add("hidden");return;}
+  const{sp}=getMonthData();
+  const spent=sp[curCat]||0,limit=BUDGET[curCat].limit,newTotal=spent+amt,pct=Math.min((newTotal/limit)*100,100),over=newTotal>limit;
+  document.getElementById("previewBox").classList.remove("hidden");
+  document.getElementById("previewBox").innerHTML=`
+    <div style="font-size:10px;color:#5a6478;margin-bottom:8px;font-family:monospace;text-transform:uppercase">Xem trước — ${curCat}</div>
+    <div class="preview-row"><span style="color:#5a6478">Sau khi chi</span><span style="font-family:monospace;color:${over?"#ff4757":"#dde3ee"}">${fmt(newTotal)} / ${fmt(limit)}</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${over?"#c0392b":"#00d2d3"}"></div></div>
+    <div style="font-size:11px;color:${over?"#ff4757":"#5a6478"};margin-top:6px">${over?"⚠️ Vượt ngân sách "+fmt(newTotal-limit):"Còn lại "+fmt(limit-newTotal)+" sau khi chi"}</div>`;
 }
 
-// ══ GOAL ACTIONS ══
-function selectGoal(k){curGoalKey=k;renderGoals();document.getElementById("addToGoalSection").classList.remove("hidden");}
-function addToGoal(){
-  const amt=parseFloat(document.getElementById("gAddAmt").value);
-  if (!amt||amt<=0||!curGoalKey){showToast("Nhập số tiền hợp lệ","err");return;}
-  if (!DATA.goals[curGoalKey].saved) DATA.goals[curGoalKey].saved=0;
-  DATA.goals[curGoalKey].saved+=amt;
-  saveData();renderGoals();renderHeader();
-  document.getElementById("gAddAmt").value="";
-  showToast(`+${fmt(amt)} thêm vào mục tiêu ✓`);
-}
-function deleteGoal(k){delete DATA.goals[k];if(curGoalKey===k)curGoalKey=null;saveData();render();}
-
-// ══ DEBT ACTIONS ══
-function selectDebt(k){curDebtKey=k;renderDebts();document.getElementById("addPaymentSection").classList.remove("hidden");document.getElementById("dPayAmt").value=DATA.debts[k]?.monthly||"";}
-function payDebt(){
-  const amt=parseFloat(document.getElementById("dPayAmt").value);
-  if (!amt||amt<=0||!curDebtKey){showToast("Nhập số tiền hợp lệ","err");return;}
-  const d=DATA.debts[curDebtKey];
-  if (d.remaining===undefined) d.remaining=d.total;
-  d.remaining=Math.max(0,d.remaining-amt);
-  saveData();renderDebts();renderHeader();
-  document.getElementById("dPayAmt").value="";
-  showToast(`-${fmt(amt)} đã trả nợ ✓`);
-}
-function deleteDebt(k){delete DATA.debts[k];if(curDebtKey===k)curDebtKey=null;saveData();render();}
-
-// ══ BUDGET CRUD ══
-function openEditBudget(k) {
-  editingBudgetKey=k;
-  const c=DATA.budgetCats[k];
-  document.getElementById("editBudgetTitle").textContent=`✏️ Sửa: ${c.icon} ${c.name}`;
-  document.getElementById("ebName").value=c.name;
-  document.getElementById("ebIcon").value=c.icon;
-  document.getElementById("ebLimit").value=c.limit;
-  openModal("editBudgetModal");
-}
-function saveEditBudget(){
-  const name=document.getElementById("ebName").value.trim();
-  const icon=document.getElementById("ebIcon").value||"📁";
-  const limit=parseFloat(document.getElementById("ebLimit").value);
-  if (!name||!limit){showToast("Điền đủ thông tin","err");return;}
-  DATA.budgetCats[editingBudgetKey]={...DATA.budgetCats[editingBudgetKey],name,icon,limit};
-  saveData();render();closeModal("editBudgetModal");showToast("Đã cập nhật danh mục ✓");
-}
-function saveBudgetCat(){
-  const name=document.getElementById("bCatName").value.trim();
-  const icon=document.getElementById("bCatIcon").value||"📁";
-  const limit=parseFloat(document.getElementById("bCatLimit").value);
-  if (!name||!limit){showToast("Điền đủ thông tin","err");return;}
-  const key=name.toLowerCase().replace(/\s+/g,"_")+Date.now();
-  if (!DATA.budgetCats) DATA.budgetCats={};
-  DATA.budgetCats[key]={name,icon,limit};
-  saveData();render();closeModal("budgetModal");
-  ["bCatName","bCatIcon","bCatLimit"].forEach(id=>document.getElementById(id).value="");
-  showToast("Đã thêm danh mục ✓");
-}
-function deleteBudgetCat(k){delete DATA.budgetCats[k];saveData();render();}
-
-// ══ GOAL CRUD ══
-function openEditGoal(k){
-  editingGoalKey=k;
-  const g=DATA.goals[k];
-  document.getElementById("egName").value=g.name;
-  document.getElementById("egIcon").value=g.icon;
-  document.getElementById("egTarget").value=g.target;
-  document.getElementById("egSaved").value=g.saved||0;
-  document.getElementById("egDeadline").value=g.deadline||"";
-  openModal("editGoalModal");
-}
-function saveEditGoal(){
-  const name=document.getElementById("egName").value.trim();
-  const icon=document.getElementById("egIcon").value||"🎯";
-  const target=parseFloat(document.getElementById("egTarget").value);
-  const saved=parseFloat(document.getElementById("egSaved").value)||0;
-  const deadline=document.getElementById("egDeadline").value;
-  if (!name||!target){showToast("Điền đủ thông tin","err");return;}
-  DATA.goals[editingGoalKey]={...DATA.goals[editingGoalKey],name,icon,target,saved,deadline};
-  saveData();renderGoals();closeModal("editGoalModal");showToast("Đã cập nhật mục tiêu ✓");
-}
-function saveGoal(){
-  const name=document.getElementById("gName").value.trim();
-  const icon=document.getElementById("gIcon").value||"🎯";
-  const target=parseFloat(document.getElementById("gTarget").value);
-  const deadline=document.getElementById("gDeadline").value;
-  if (!name||!target){showToast("Điền đủ thông tin","err");return;}
-  const key="g"+Date.now();
-  if (!DATA.goals) DATA.goals={};
-  DATA.goals[key]={name,icon,target,deadline,saved:0};
-  saveData();renderGoals();closeModal("goalModal");
-  ["gName","gIcon","gTarget","gDeadline"].forEach(id=>document.getElementById(id).value="");
-  showToast("Đã thêm mục tiêu ✓");
+function addTxn(){
+  const amt=parseFloat(document.getElementById("fAmount").value);
+  if(!amt||amt<=0){showToast("Vui lòng nhập số tiền hợp lệ","err");return;}
+  const note=document.getElementById("fNote").value;
+  const date=document.getElementById("fDate").value||today();
+  if(curType==="expense"){
+    const{sp}=getMonthData();
+    const spent=sp[curCat]||0,limit=BUDGET[curCat].limit,newTotal=spent+amt;
+    if(newTotal>limit){
+      pendingAmt=amt;pendingCat=curCat;pendingNote=note;pendingDate=date;
+      document.getElementById("warnMsg").textContent=`Bạn sẽ vượt ngân sách "${curCat}" ${fmt(newTotal-limit)} trong tháng này.`;
+      document.getElementById("warnModal").style.display="flex";
+      return;
+    }
+    if(newTotal>limit*.8) showToast(`⚠️ ${curCat} đã dùng ${Math.round((newTotal/limit)*100)}% ngân sách`,"warn");
+  }
+  commitTxn(curType,amt,curType==="income"?"Thu nhập":curCat,note,date);
 }
 
-// ══ DEBT CRUD ══
-function openEditDebt(k){
-  editingDebtKey=k;
-  const d=DATA.debts[k];
-  document.getElementById("edName").value=d.name;
-  document.getElementById("edIcon").value=d.icon;
-  document.getElementById("edTotal").value=d.total;
-  document.getElementById("edRemaining").value=d.remaining??d.total;
-  document.getElementById("edMonthly").value=d.monthly||0;
-  document.getElementById("edDeadline").value=d.deadline||"";
-  openModal("editDebtModal");
-}
-function saveEditDebt(){
-  const name=document.getElementById("edName").value.trim();
-  const icon=document.getElementById("edIcon").value||"💳";
-  const total=parseFloat(document.getElementById("edTotal").value);
-  const remaining=parseFloat(document.getElementById("edRemaining").value);
-  const monthly=parseFloat(document.getElementById("edMonthly").value)||0;
-  const deadline=document.getElementById("edDeadline").value;
-  if (!name||!total){showToast("Điền đủ thông tin","err");return;}
-  DATA.debts[editingDebtKey]={...DATA.debts[editingDebtKey],name,icon,total,remaining,monthly,deadline};
-  saveData();renderDebts();renderHeader();closeModal("editDebtModal");showToast("Đã cập nhật khoản nợ ✓");
-}
-function saveDebt(){
-  const name=document.getElementById("dName").value.trim();
-  const icon=document.getElementById("dIcon").value||"💳";
-  const total=parseFloat(document.getElementById("dTotal").value);
-  const monthly=parseFloat(document.getElementById("dMonthly").value)||0;
-  const deadline=document.getElementById("dDeadline").value;
-  if (!name||!total){showToast("Điền đủ thông tin","err");return;}
-  const key="d"+Date.now();
-  if (!DATA.debts) DATA.debts={};
-  DATA.debts[key]={name,icon,total,monthly,deadline,remaining:total};
-  saveData();renderDebts();closeModal("debtModal");
-  ["dName","dIcon","dTotal","dMonthly","dDeadline"].forEach(id=>document.getElementById(id).value="");
-  showToast("Đã thêm khoản nợ ✓");
+function commitTxn(type,amt,cat,note,date){
+  const mk=getMK();
+  txns.unshift({id:Date.now(),type,amount:amt,category:cat,note,date,monthKey:mk});
+  save();render();
+  document.getElementById("fAmount").value="";
+  document.getElementById("fNote").value="";
+  document.getElementById("previewBox").classList.add("hidden");
+  showToast(type==="income"?`+${fmt(amt)} thu nhập đã lưu ✓`:`-${fmt(amt)} chi tiêu đã lưu ✓`);
 }
 
-// ══ TXN ══
+function confirmOver(){
+  document.getElementById("warnModal").style.display="none";
+  commitTxn("expense",pendingAmt,pendingCat,pendingNote,pendingDate);
+}
+function closeWarn(){document.getElementById("warnModal").style.display="none";}
+
+function addSaving(){
+  const amt=parseFloat(document.getElementById("sAmount").value);
+  if(!amt||amt<=0){showToast("Vui lòng nhập số tiền hợp lệ","err");return;}
+  const date=document.getElementById("sDate").value||today();
+  const mk=getMK();
+  const g=goals.find(g=>g.key===curGoal);
+
+  // Add to savings balance
+  savings[curGoal]=(savings[curGoal]||0)+amt;
+
+  // Record as a transaction (type=saving) so it deducts from available balance
+  txns.unshift({
+    id:Date.now(),
+    type:"saving",
+    amount:amt,
+    category:curGoal,
+    goalLabel:g.label,
+    note:"",
+    date,
+    monthKey:mk
+  });
+
+  save();render();renderGoalCards();
+  document.getElementById("sAmount").value="";
+  showToast(`+${fmt(amt)} đã thêm vào ${g.label} ✓`);
+}
+
 function deleteTxn(id){
-  DATA.txns=(DATA.txns||[]).filter(t=>t.id!==id);
-  saveData();render();showToast("Đã xóa giao dịch");
+  const t=txns.find(x=>x.id===id);
+  if(t&&t.type==="saving"){
+    // Reverse the saving
+    savings[t.category]=Math.max((savings[t.category]||0)-t.amount,0);
+  }
+  txns=txns.filter(x=>x.id!==id);
+  save();render();
+  showToast("Đã xóa giao dịch","warn");
 }
 
-// ══ UTILS ══
-function openModal(id){document.getElementById(id).classList.remove("hidden");}
-function closeModal(id){document.getElementById(id).classList.add("hidden");}
-function copyLink(){navigator.clipboard.writeText(location.href).then(()=>showToast("Đã copy link ✓")).catch(()=>showToast("Copy thủ công link ở trên","warn"));}
-function showToast(msg,type="ok"){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.style.background=type==="err"?"var(--red)":type==="warn"?"var(--yellow)":"var(--green)";
-  t.style.display="block";
-  setTimeout(()=>t.style.display="none",3000);
+function openBackup(){document.getElementById("backupModal").style.display="flex";}
+function closeBackup(){document.getElementById("backupModal").style.display="none";}
+
+function exportData(){
+  const data={txns,savings,goals,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=`vanmoney-backup-${today()}.json`;a.click();
+  URL.revokeObjectURL(url);
+  showToast("Đã xuất dữ liệu backup ✓");
+  closeBackup();
 }
 
-document.getElementById("lDate").value=today();
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.txns)txns=d.txns;
+      if(d.savings)savings=d.savings;
+      if(d.goals)goals=d.goals;
+      save();render();
+      showToast("Đã nhập dữ liệu thành công ✓");
+      closeBackup();
+    }catch{showToast("File không hợp lệ","err");}
+  };
+  reader.readAsText(file);
+}
+
+// Init
+setType("expense");
+document.getElementById("fDate").value=today();
+document.getElementById("sDate").value=today();
+render();
 </script>
 </body>
 </html>
