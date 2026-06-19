@@ -177,6 +177,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
     <input type="number" class="inp" id="egTarget" placeholder="2000">
     <div class="field-label">Đã tiết kiệm (AUD)</div>
     <input type="number" class="inp" id="egSaved" placeholder="0">
+    <div class="field-label">Ngày bắt đầu tiết kiệm</div>
+    <input type="date" class="inp" id="egStartDate">
     <div class="field-label">Deadline</div>
     <input type="date" class="inp" id="egDeadline">
     <div class="modal-btns">
@@ -196,6 +198,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
     <input class="inp" id="gIcon" placeholder="✈️" maxlength="2">
     <div class="field-label">Số tiền cần (AUD)</div>
     <input type="number" class="inp" id="gTarget" placeholder="2000">
+    <div class="field-label">Ngày bắt đầu tiết kiệm</div>
+    <input type="date" class="inp" id="gStartDate">
     <div class="field-label">Deadline</div>
     <input type="date" class="inp" id="gDeadline">
     <div class="modal-btns">
@@ -377,6 +381,14 @@ const mk    = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.
 const fmtMonthLabel = key => { const [y,m]=key.split("-"); const names=["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"]; return `${names[+m-1]}/${y}`; };
 const fmtDate = iso => { if(!iso)return"—"; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; };
 
+function calcTodayTarget(g) {
+  if (!g.startDate || !g.deadline) return null;
+  const start = new Date(g.startDate), end = new Date(g.deadline), now = new Date();
+  if (now <= start) return 0;
+  if (now >= end)   return g.target;
+  return ((now - start) / (end - start)) * g.target;
+}
+
 // ══ REALTIME CLOCK ══
 function updateClock() {
   const d = new Date();
@@ -521,15 +533,35 @@ function renderGoals() {
   const goals=DATA.goals||{};
   let html="";
   Object.entries(goals).forEach(([k,g])=>{
-    const pct=Math.min(((g.saved||0)/g.target)*100,100), done=(g.saved||0)>=g.target;
+    const saved=g.saved||0, pct=Math.min((saved/g.target)*100,100), done=saved>=g.target;
     const deadlineStr = g.deadline ? fmtDate(g.deadline) : "—";
+    const todayTarget = calcTodayTarget(g);
+    const todayPct = todayTarget!==null ? Math.min((todayTarget/g.target)*100,100) : null;
+    const ahead = todayTarget!==null && saved>=todayTarget;
+    const diff  = todayTarget!==null ? Math.abs(saved-todayTarget) : 0;
+
+    const markerHtml = todayPct!==null
+      ? `<div style="position:absolute;left:${todayPct}%;top:-4px;width:2px;height:14px;background:${ahead?"var(--green)":"var(--yellow)"};border-radius:2px;transform:translateX(-50%)" title="Mục tiêu hôm nay"></div>`
+      : "";
+
+    const todayHtml = todayTarget!==null
+      ? `<div style="font-size:10px;font-family:'JetBrains Mono',monospace;margin-top:5px;display:flex;justify-content:space-between;align-items:center">
+          <span style="color:var(--muted)">🎯 Hôm nay nên có: <b style="color:${ahead?"var(--green)":"var(--yellow)"}">${fmt(todayTarget)}</b></span>
+          <span style="color:${ahead?"var(--green)":"var(--yellow)"};">${ahead?"▲ Vượt "+fmt(diff):"▼ Thiếu "+fmt(diff)}</span>
+        </div>`
+      : "";
+
     html+=`<div class="card" style="cursor:pointer;border-color:${curGoalKey===k?"var(--green)":"var(--border)"}" onclick="selectGoal('${k}')">
       <div class="card-top">
         <div class="card-name">${g.icon} ${g.name} ${done?'<span class="badge badge-green">DONE ✓</span>':''}</div>
-        <div class="card-amt"><div style="color:var(--green)">${fmt(g.saved||0)}</div><div style="color:var(--muted);font-size:10px">/ ${fmt(g.target)}</div></div>
+        <div class="card-amt"><div style="color:var(--green)">${fmt(saved)}</div><div style="color:var(--muted);font-size:10px">/ ${fmt(g.target)}</div></div>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:var(--green)"></div></div>
-      <div class="card-sub"><span>${pct.toFixed(1)}% · Hạn ${deadlineStr}</span><span style="color:var(--green)">Còn ${fmt(g.target-(g.saved||0))}</span></div>
+      <div class="bar-bg" style="position:relative">
+        <div class="bar-fill" style="width:${pct}%;background:var(--green)"></div>
+        ${markerHtml}
+      </div>
+      <div class="card-sub"><span>${pct.toFixed(1)}% · Hạn ${deadlineStr}</span><span style="color:var(--green)">Còn ${fmt(g.target-saved)}</span></div>
+      ${todayHtml}
       <div class="card-actions">
         <button class="act-btn edit" onclick="event.stopPropagation();openEditGoal('${k}')">✏️ Sửa</button>
         <button class="act-btn del" onclick="event.stopPropagation();deleteGoal('${k}')">🗑 Xóa</button>
@@ -750,6 +782,7 @@ function openEditGoal(k){
   document.getElementById("egIcon").value=g.icon;
   document.getElementById("egTarget").value=g.target;
   document.getElementById("egSaved").value=g.saved||0;
+  document.getElementById("egStartDate").value=g.startDate||"";
   document.getElementById("egDeadline").value=g.deadline||"";
   openModal("editGoalModal");
 }
@@ -758,22 +791,24 @@ function saveEditGoal(){
   const icon=document.getElementById("egIcon").value||"🎯";
   const target=parseFloat(document.getElementById("egTarget").value);
   const saved=parseFloat(document.getElementById("egSaved").value)||0;
+  const startDate=document.getElementById("egStartDate").value;
   const deadline=document.getElementById("egDeadline").value;
   if (!name||!target){showToast("Điền đủ thông tin","err");return;}
-  DATA.goals[editingGoalKey]={...DATA.goals[editingGoalKey],name,icon,target,saved,deadline};
+  DATA.goals[editingGoalKey]={...DATA.goals[editingGoalKey],name,icon,target,saved,startDate,deadline};
   saveData();renderGoals();closeModal("editGoalModal");showToast("Đã cập nhật mục tiêu ✓");
 }
 function saveGoal(){
   const name=document.getElementById("gName").value.trim();
   const icon=document.getElementById("gIcon").value||"🎯";
   const target=parseFloat(document.getElementById("gTarget").value);
+  const startDate=document.getElementById("gStartDate").value;
   const deadline=document.getElementById("gDeadline").value;
   if (!name||!target){showToast("Điền đủ thông tin","err");return;}
   const key="g"+Date.now();
   if (!DATA.goals) DATA.goals={};
-  DATA.goals[key]={name,icon,target,deadline,saved:0};
+  DATA.goals[key]={name,icon,target,startDate,deadline,saved:0};
   saveData();renderGoals();closeModal("goalModal");
-  ["gName","gIcon","gTarget","gDeadline"].forEach(id=>document.getElementById(id).value="");
+  ["gName","gIcon","gTarget","gStartDate","gDeadline"].forEach(id=>document.getElementById(id).value="");
   showToast("Đã thêm mục tiêu ✓");
 }
 
