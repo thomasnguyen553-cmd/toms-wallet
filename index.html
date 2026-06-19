@@ -448,7 +448,7 @@ function monthSpend(mkey) {
 function renderHeader() {
   const m=mk(), txns=DATA.txns||[];
   const income  = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense = txns.filter(t=>t.monthKey===m&&t.type==="expense").reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving")).reduce((s,t)=>s+t.amount,0);
   const bal = income-expense;
   const totalDebt = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
   document.getElementById("bIncome").textContent  = fmt(income);
@@ -531,6 +531,7 @@ function applyNextMonthAdj() {
 
 function renderGoals() {
   const goals=DATA.goals||{};
+  const curMk=mk();
   let html="";
   Object.entries(goals).forEach(([k,g])=>{
     const saved=g.saved||0, pct=Math.min((saved/g.target)*100,100), done=saved>=g.target;
@@ -539,14 +540,16 @@ function renderGoals() {
     const todayPct = todayTarget!==null ? Math.min((todayTarget/g.target)*100,100) : null;
     const ahead = todayTarget!==null && saved>=todayTarget;
     const diff  = todayTarget!==null ? Math.abs(saved-todayTarget) : 0;
+    const monthSaved = (DATA.txns||[]).filter(t=>t.monthKey===curMk&&t.type==="saving"&&t.cat===k).reduce((s,t)=>s+t.amount,0);
 
     const markerHtml = todayPct!==null
-      ? `<div style="position:absolute;left:${todayPct}%;top:-4px;width:2px;height:14px;background:${ahead?"var(--green)":"var(--yellow)"};border-radius:2px;transform:translateX(-50%)" title="Mục tiêu hôm nay"></div>`
+      ? `<div style="position:absolute;left:${todayPct}%;top:50%;transform:translate(-50%,-50%);width:3px;height:14px;background:${ahead?"var(--green)":"var(--yellow)"};border-radius:2px;z-index:2"></div>
+         <div style="position:absolute;left:${todayPct}%;top:-18px;transform:translateX(-50%);font-size:9px;font-family:'JetBrains Mono',monospace;color:${ahead?"var(--green)":"var(--yellow)"};white-space:nowrap;background:var(--surface2);padding:1px 4px;border-radius:4px">🎯 ${fmt(todayTarget)}</div>`
       : "";
 
     const todayHtml = todayTarget!==null
       ? `<div style="font-size:10px;font-family:'JetBrains Mono',monospace;margin-top:5px;display:flex;justify-content:space-between;align-items:center">
-          <span style="color:var(--muted)">🎯 Hôm nay nên có: <b style="color:${ahead?"var(--green)":"var(--yellow)"}">${fmt(todayTarget)}</b></span>
+          <span style="color:var(--muted)">Hôm nay nên có: <b style="color:${ahead?"var(--green)":"var(--yellow)"}">${fmt(todayTarget)}</b></span>
           <span style="color:${ahead?"var(--green)":"var(--yellow)"};">${ahead?"▲ Vượt "+fmt(diff):"▼ Thiếu "+fmt(diff)}</span>
         </div>`
       : "";
@@ -556,12 +559,17 @@ function renderGoals() {
         <div class="card-name">${g.icon} ${g.name} ${done?'<span class="badge badge-green">DONE ✓</span>':''}</div>
         <div class="card-amt"><div style="color:var(--green)">${fmt(saved)}</div><div style="color:var(--muted);font-size:10px">/ ${fmt(g.target)}</div></div>
       </div>
-      <div class="bar-bg" style="position:relative">
-        <div class="bar-fill" style="width:${pct}%;background:var(--green)"></div>
+      <div style="position:relative;margin:18px 0 6px">
+        <div class="bar-bg" style="margin:0">
+          <div class="bar-fill" style="width:${pct}%;background:var(--green)"></div>
+        </div>
         ${markerHtml}
       </div>
       <div class="card-sub"><span>${pct.toFixed(1)}% · Hạn ${deadlineStr}</span><span style="color:var(--green)">Còn ${fmt(g.target-saved)}</span></div>
       ${todayHtml}
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;margin-top:5px;color:var(--muted)">
+        Tháng này đã tiết kiệm: <b style="color:var(--accent)">${fmt(monthSaved)}</b>
+      </div>
       <div class="card-actions">
         <button class="act-btn edit" onclick="event.stopPropagation();openEditGoal('${k}')">✏️ Sửa</button>
         <button class="act-btn del" onclick="event.stopPropagation();deleteGoal('${k}')">🗑 Xóa</button>
@@ -614,13 +622,14 @@ function renderHistory() {
   }
   document.getElementById("historyList").innerHTML=txns.map(t=>{
     const isInc=t.type==="income";
-    const icon=isInc?"💵":(DATA.budgetCats?.[t.cat]?.icon||"💸");
-    const col=isInc?"var(--green)":"var(--red)";
-    const catName=isInc?"Thu nhập":(DATA.budgetCats?.[t.cat]?.name||t.cat||"Chi tiêu");
+    const isSav=t.type==="saving";
+    const icon=isInc?"💵":isSav?"💰":(DATA.budgetCats?.[t.cat]?.icon||"💸");
+    const col=isInc?"var(--green)":isSav?"var(--purple)":"var(--red)";
+    const catName=isInc?"Thu nhập":isSav?"Tiết kiệm — "+(t.note||t.cat):(DATA.budgetCats?.[t.cat]?.name||t.cat||"Chi tiêu");
     return `<div class="txn">
-      <div class="txn-icon" style="background:${isInc?"#064e3b":"#7f1d1d"}">${icon}</div>
+      <div class="txn-icon" style="background:${isInc?"#064e3b":isSav?"#2d1f4e":"#7f1d1d"}">${icon}</div>
       <div class="txn-info">
-        <div class="txn-name">${catName}${t.note?" — "+t.note:""}</div>
+        <div class="txn-name">${catName}${!isSav&&t.note?" — "+t.note:""}</div>
         <div class="txn-meta">${t.date}</div>
       </div>
       <div class="txn-amt" style="color:${col}">${isInc?"+":"−"}${fmt(t.amount)}</div>
@@ -722,7 +731,11 @@ function addToGoal(){
   if (!amt||amt<=0||!curGoalKey){showToast("Nhập số tiền hợp lệ","err");return;}
   if (!DATA.goals[curGoalKey].saved) DATA.goals[curGoalKey].saved=0;
   DATA.goals[curGoalKey].saved+=amt;
-  saveData();renderGoals();renderHeader();
+  // Record as a transaction so it deducts from monthly available balance
+  if (!DATA.txns) DATA.txns=[];
+  const gName=(DATA.goals[curGoalKey].icon||"")+" "+(DATA.goals[curGoalKey].name||curGoalKey);
+  DATA.txns.push({id:Date.now().toString(),type:"saving",amount:amt,cat:curGoalKey,note:gName.trim(),monthKey:mk(),date:today()});
+  saveData();render();
   document.getElementById("gAddAmt").value="";
   showToast(`+${fmt(amt)} thêm vào mục tiêu ✓`);
 }
