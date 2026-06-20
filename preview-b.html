@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview B – iOS Glassmorphism</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;--bg2:rgba(255,255,255,.07);--bg3:rgba(255,255,255,.04);
+  --label:#fff;--label2:rgba(255,255,255,.55);--label3:rgba(255,255,255,.25);
+  --sep:rgba(255,255,255,.08);
+  --blue:#0a84ff;--green:#30d158;--red:#ff453a;--orange:#ff9f0a;--purple:#bf5af2;
+}
+body{background:var(--bg);color:var(--label);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;padding-bottom:90px;position:relative;overflow-x:hidden}
+
+/* Background blobs */
+body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;height:350px;background:radial-gradient(circle,rgba(10,132,255,.18),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:100px;left:-80px;width:280px;height:280px;background:radial-gradient(circle,rgba(48,209,88,.12),transparent 70%);pointer-events:none;z-index:0}
+
+/* HEADER */
+.nav{padding:56px 20px 10px;position:relative;z-index:1}
+.nav-top{display:flex;justify-content:space-between;align-items:flex-start}
+.nav-eyebrow{font-size:12px;color:var(--blue);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.nav-title{font-size:32px;font-weight:800;letter-spacing:-.8px}
+.month-chip{background:rgba(10,132,255,.15);border:1px solid rgba(10,132,255,.3);border-radius:10px;padding:6px 12px;font-size:12px;color:var(--blue);font-weight:600}
+.sync-row{display:flex;align-items:center;gap:5px;margin-top:8px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-text{font-size:11px;color:var(--green);font-weight:500}
+
+/* HERO CARD */
+.hero{margin:14px 16px;background:linear-gradient(135deg,rgba(10,132,255,.25),rgba(191,90,242,.15));border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:22px;backdrop-filter:blur(30px);position:relative;z-index:1;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(10,132,255,.3),transparent);pointer-events:none}
+.hero-label{font-size:13px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:6px}
+.hero-val{font-size:48px;font-weight:800;letter-spacing:-2px;line-height:1}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:6px}
+.hero-divider{height:1px;background:rgba(255,255,255,.1);margin:16px 0}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr}
+.hs{text-align:center}
+.hs-label{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.hs-val{font-size:17px;font-weight:700}
+.hs-divider{width:1px;background:rgba(255,255,255,.1)}
+
+/* NET WORTH */
+.nw-card{margin:0 16px 16px;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.2);border-radius:18px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.nw-label{font-size:13px;color:rgba(48,209,88,.8);font-weight:500}
+.nw-val{font-size:22px;font-weight:800;color:var(--green)}
+
+/* SECTION */
+.section{margin:0 16px 20px;position:relative;z-index:1}
+.section-header{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-left:2px}
+.glass-list{background:var(--bg2);border:1px solid var(--sep);border-radius:18px;overflow:hidden;backdrop-filter:blur(20px)}
+.glass-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--sep)}
+.glass-row:last-child{border-bottom:none}
+.gr-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.gr-info{flex:1;min-width:0}
+.gr-name{font-size:15px;font-weight:500}
+.gr-bar{height:3px;background:rgba(255,255,255,.1);border-radius:99px;margin:5px 0 3px;overflow:hidden}
+.gr-bar-fill{height:100%;border-radius:99px}
+.gr-sub{font-size:11px;color:var(--label2)}
+.gr-right{text-align:right;flex-shrink:0}
+.gr-amt{font-size:15px;font-weight:600}
+.gr-sub2{font-size:11px;color:var(--label2);margin-top:2px}
+
+/* BADGE */
+.badge-ios{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700;margin-left:5px;display:inline-block}
+
+/* BOTTOM TAB */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(9,9,15,.8);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,.08);display:flex;padding:10px 0 28px;z-index:999}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:rgba(255,255,255,.3);padding:2px 0}
+.tab-item.active{color:var(--blue)}
+.tab-icon{font-size:23px;line-height:1}
+.tab-label{font-size:9px;font-weight:500;letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-top">
+    <div>
+      <div class="nav-eyebrow">Tài chính cá nhân</div>
+      <div class="nav-title">Tom's Wallet</div>
+    </div>
+    <div class="month-chip">Tháng 6 · 2026</div>
+  </div>
+  <div class="sync-row">
+    <div class="sync-dot"></div>
+    <span class="sync-text">SYNCED · snk79rao</span>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Còn lại tháng này</div>
+  <div class="hero-val">+$787.26</div>
+  <div class="hero-sub">Thu nhập $5,769 · Chi $4,982</div>
+  <div class="hero-divider"></div>
+  <div class="hero-stats">
+    <div class="hs"><div class="hs-label">Thu nhập</div><div class="hs-val" style="color:#30d158">$5,769</div></div>
+    <div class="hs-divider"></div>
+    <div class="hs"><div class="hs-label">Chi tiêu</div><div class="hs-val" style="color:#ff453a">$4,982</div></div>
+    <div class="hs-divider"></div>
+    <div class="hs"><div class="hs-label">Tiết kiệm</div><div class="hs-val" style="color:#bf5af2">$338</div></div>
+  </div>
+</div>
+
+<div class="nw-card">
+  <div>
+    <div class="nw-label">Tài sản ròng</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">Còn lại + Tiết kiệm − Nợ</div>
+  </div>
+  <div class="nw-val">+$1,125.26</div>
+</div>
+
+<div class="section">
+  <div class="section-header">Ngân sách tháng này</div>
+  <div class="glass-list">
+    <div class="glass-row">
+      <div class="gr-icon" style="background:rgba(106,176,76,.2)">🏠</div>
+      <div class="gr-info">
+        <div class="gr-name">Tiền thuê nhà</div>
+        <div class="gr-bar"><div class="gr-bar-fill" style="width:100%;background:#6ab04c"></div></div>
+        <div class="gr-sub">$975 / $975 · Còn $0</div>
+      </div>
+      <div class="gr-right">
+        <div class="gr-amt" style="color:#30d158">$975</div>
+        <div class="gr-sub2">100%</div>
+      </div>
+    </div>
+    <div class="glass-row">
+      <div class="gr-icon" style="background:rgba(255,69,58,.2)">🍜</div>
+      <div class="gr-info">
+        <div class="gr-name">Ăn ngoài <span class="badge-ios" style="background:rgba(255,69,58,.2);color:#ff453a">VƯỢT</span></div>
+        <div class="gr-bar"><div class="gr-bar-fill" style="width:100%;background:#ff453a"></div></div>
+        <div class="gr-sub" style="color:#ff453a">$349 / $217 · Vượt $132</div>
+      </div>
+      <div class="gr-right">
+        <div class="gr-amt" style="color:#ff453a">$349</div>
+        <div class="gr-sub2" style="color:#ff453a">161%</div>
+      </div>
+    </div>
+    <div class="glass-row">
+      <div class="gr-icon" style="background:rgba(10,132,255,.2)">🛒</div>
+      <div class="gr-info">
+        <div class="gr-name">Đi chợ</div>
+        <div class="gr-bar"><div class="gr-bar-fill" style="width:60%;background:#0a84ff"></div></div>
+        <div class="gr-sub">$208 / $346 · Còn $138</div>
+      </div>
+      <div class="gr-right">
+        <div class="gr-amt">$208</div>
+        <div class="gr-sub2">60%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-item active"><div class="tab-icon">💰</div><div class="tab-label">Ngân sách</div></button>
+  <button class="tab-item"><div class="tab-icon">➕</div><div class="tab-label">Ghi</div></button>
+  <button class="tab-item"><div class="tab-icon">🎯</div><div class="tab-label">Tiết kiệm</div></button>
+  <button class="tab-item"><div class="tab-icon">💳</div><div class="tab-label">Nợ</div></button>
+  <button class="tab-item"><div class="tab-icon">💎</div><div class="tab-label">Tài sản</div></button>
+  <button class="tab-item"><div class="tab-icon">📋</div><div class="tab-label">Lịch sử</div></button>
+</div>
+</body>
+</html>

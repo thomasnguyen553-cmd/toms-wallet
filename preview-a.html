@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview A – iOS Pure Dark</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--bg2:#1c1c1e;--bg3:#2c2c2e;--bg4:#3a3a3c;
+  --label:#fff;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);
+  --sep:rgba(84,84,88,.65);
+  --blue:#0a84ff;--green:#30d158;--red:#ff453a;--orange:#ff9f0a;--purple:#bf5af2;--teal:#5ac8fa;
+}
+body{background:var(--bg);color:var(--label);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',sans-serif;min-height:100vh;padding-bottom:90px}
+
+/* HEADER */
+.nav{padding:52px 20px 8px;background:var(--bg)}
+.nav-eyebrow{font-size:13px;color:var(--label2);font-weight:400;margin-bottom:2px}
+.nav-title{font-size:34px;font-weight:700;letter-spacing:-.5px}
+.nav-title span{color:var(--blue)}
+.sync-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(48,209,88,.12);border-radius:99px;padding:4px 10px;margin-top:8px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-label{font-size:11px;color:var(--green);font-weight:600;letter-spacing:.02em}
+
+/* WALLET LINK */
+.link-row{margin:10px 16px;background:var(--bg2);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.link-url{font-size:11px;color:var(--blue);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-copy{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer}
+
+/* BALANCE WIDGET */
+.widget{margin:16px;background:linear-gradient(145deg,#1c2e4a,#0d1f3c);border-radius:22px;padding:20px;position:relative;overflow:hidden}
+.widget::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,132,255,.15),transparent);pointer-events:none}
+.widget-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.widget-main-label{font-size:13px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:4px}
+.widget-main-val{font-size:42px;font-weight:700;letter-spacing:-1.5px;color:#fff}
+.widget-badge{background:rgba(48,209,88,.2);border-radius:99px;padding:3px 10px;display:inline-block;font-size:12px;color:var(--green);font-weight:600;margin-top:4px}
+.widget-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
+.widget-stat{background:rgba(255,255,255,.05);padding:12px 10px;text-align:center}
+.ws-label{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.ws-val{font-size:16px;font-weight:700}
+
+/* SECTION */
+.section{margin:0 16px 20px}
+.section-header{font-size:13px;font-weight:600;color:var(--label2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-left:4px}
+.ios-list{background:var(--bg2);border-radius:14px;overflow:hidden}
+.ios-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--sep)}
+.ios-row:last-child{border-bottom:none}
+.ios-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ios-row-info{flex:1;min-width:0}
+.ios-row-name{font-size:15px;font-weight:500}
+.ios-row-sub{font-size:12px;color:var(--label2);margin-top:2px}
+.ios-row-right{text-align:right;flex-shrink:0}
+.ios-row-amt{font-size:15px;font-weight:600}
+.ios-row-sub2{font-size:12px;color:var(--label2);margin-top:1px}
+.bar-wrap{margin:4px 0 0}
+.bar-bg2{height:4px;background:var(--bg4);border-radius:99px;overflow:hidden}
+.bar-fill2{height:100%;border-radius:99px}
+
+/* BOTTOM TAB */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(28,28,30,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--sep);display:flex;padding:8px 0 28px;z-index:999}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--label3);padding:4px 0}
+.tab-item.active{color:var(--blue)}
+.tab-icon{font-size:22px;line-height:1}
+.tab-label{font-size:10px;font-weight:500;letter-spacing:.02em}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-eyebrow">Quản lý tài chính</div>
+  <div class="nav-title">Tom's <span>Wallet</span></div>
+  <div class="sync-pill"><div class="sync-dot"></div><span class="sync-label">SYNCED · snk79rao</span></div>
+</div>
+
+<div class="link-row">
+  <div class="link-url">https://thomasnguyen553-cmd.github.io/toms-wallet/?wallet=snk79rao</div>
+  <button class="link-copy">Copy</button>
+</div>
+
+<div class="widget">
+  <div class="widget-row">
+    <div>
+      <div class="widget-main-label">Còn lại tháng này</div>
+      <div class="widget-main-val">+$787.26</div>
+      <div class="widget-badge">Tháng 6 · 2026</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px">Tài sản ròng</div>
+      <div style="font-size:22px;font-weight:700;color:#30d158">+$1,125.26</div>
+    </div>
+  </div>
+  <div class="widget-stats">
+    <div class="widget-stat"><div class="ws-label">Thu nhập</div><div class="ws-val" style="color:#30d158">$5,769</div></div>
+    <div class="widget-stat"><div class="ws-label">Chi tiêu</div><div class="ws-val" style="color:#ff453a">$4,982</div></div>
+    <div class="widget-stat"><div class="ws-label">Tiết kiệm</div><div class="ws-val" style="color:#bf5af2">$338</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">Ngân sách tháng này</div>
+  <div class="ios-list">
+    <div class="ios-row">
+      <div class="ios-icon" style="background:rgba(106,176,76,.2)">🏠</div>
+      <div class="ios-row-info">
+        <div class="ios-row-name">Tiền thuê nhà</div>
+        <div class="bar-wrap"><div class="bar-bg2"><div class="bar-fill2" style="width:100%;background:#6ab04c"></div></div></div>
+        <div class="ios-row-sub">$975 / $975</div>
+      </div>
+      <div class="ios-row-right">
+        <div class="ios-row-amt" style="color:#30d158">$975</div>
+        <div class="ios-row-sub2">Còn $0</div>
+      </div>
+    </div>
+    <div class="ios-row">
+      <div class="ios-icon" style="background:rgba(255,159,10,.2)">🍜</div>
+      <div class="ios-row-info">
+        <div class="ios-row-name">Ăn ngoài <span style="font-size:11px;background:#ff453a;color:#fff;padding:1px 6px;border-radius:99px;margin-left:4px">VƯỢT</span></div>
+        <div class="bar-wrap"><div class="bar-bg2"><div class="bar-fill2" style="width:100%;background:#ff453a"></div></div></div>
+        <div class="ios-row-sub">$349 / $217</div>
+      </div>
+      <div class="ios-row-right">
+        <div class="ios-row-amt" style="color:#ff453a">$349</div>
+        <div class="ios-row-sub2" style="color:#ff453a">Vượt $132</div>
+      </div>
+    </div>
+    <div class="ios-row">
+      <div class="ios-icon" style="background:rgba(84,84,88,.3)">🛒</div>
+      <div class="ios-row-info">
+        <div class="ios-row-name">Đi chợ</div>
+        <div class="bar-wrap"><div class="bar-bg2"><div class="bar-fill2" style="width:60%;background:#0a84ff"></div></div></div>
+        <div class="ios-row-sub">$208 / $346</div>
+      </div>
+      <div class="ios-row-right">
+        <div class="ios-row-amt">$208</div>
+        <div class="ios-row-sub2">Còn $138</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-item active"><div class="tab-icon">💰</div><div class="tab-label">Ngân sách</div></button>
+  <button class="tab-item"><div class="tab-icon">➕</div><div class="tab-label">Ghi</div></button>
+  <button class="tab-item"><div class="tab-icon">🎯</div><div class="tab-label">Tiết kiệm</div></button>
+  <button class="tab-item"><div class="tab-icon">💳</div><div class="tab-label">Nợ</div></button>
+  <button class="tab-item"><div class="tab-icon">💎</div><div class="tab-label">Tài sản</div></button>
+  <button class="tab-item"><div class="tab-icon">📋</div><div class="tab-label">Lịch sử</div></button>
+</div>
+</body>
+</html>
