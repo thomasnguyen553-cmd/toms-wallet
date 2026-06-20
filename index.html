@@ -271,11 +271,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
 </div>
 
 <!-- BALANCE -->
-<div class="bal-grid">
+<div class="bal-grid" style="grid-template-columns:1fr 1fr 1fr">
   <div class="bal-card"><div class="bal-label">Thu nhập tháng này</div><div class="bal-val" style="color:var(--green)" id="bIncome">$0</div></div>
   <div class="bal-card"><div class="bal-label">Đã chi tiêu</div><div class="bal-val" style="color:var(--red)" id="bExpense">$0</div></div>
   <div class="bal-card"><div class="bal-label">Còn lại tháng này</div><div class="bal-val" id="bBalance">$0</div></div>
   <div class="bal-card"><div class="bal-label">Tiết kiệm tháng này</div><div class="bal-val" style="color:var(--purple)" id="bSavings">$0</div></div>
+  <div class="bal-card"><div class="bal-label">Tổng nợ còn lại</div><div class="bal-val" style="color:var(--red)" id="bDebt">$0</div></div>
+  <div class="bal-card"><div class="bal-label">Tài sản ròng</div><div class="bal-val" id="bNetWorth">$0</div></div>
 </div>
 
 <!-- ALERTS -->
@@ -447,16 +449,24 @@ function monthSpend(mkey) {
 
 function renderHeader() {
   const m=mk(), txns=DATA.txns||[];
-  const income   = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense  = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving")).reduce((s,t)=>s+t.amount,0);
+  const income         = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+  const expense        = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
   const monthlySavings = txns.filter(t=>t.monthKey===m&&t.type==="saving").reduce((s,t)=>s+t.amount,0);
-  const bal = income-expense;
-  document.getElementById("bIncome").textContent   = fmt(income);
-  document.getElementById("bExpense").textContent  = fmt(expense);
+  const bal            = income-expense;
+  const totalDebt      = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
+  const totalSaved     = Object.values(DATA.goals||{}).reduce((s,g)=>s+(g.saved||0),0);
+  const netWorth       = totalSaved - totalDebt;
+
+  document.getElementById("bIncome").textContent  = fmt(income);
+  document.getElementById("bExpense").textContent = fmt(expense);
   const bb = document.getElementById("bBalance");
   bb.textContent = (bal>=0?"+":"-")+fmt(bal);
   bb.style.color = bal>=0?"var(--green)":"var(--red)";
-  document.getElementById("bSavings").textContent  = fmt(monthlySavings);
+  document.getElementById("bSavings").textContent = fmt(monthlySavings);
+  document.getElementById("bDebt").textContent    = fmt(totalDebt);
+  const nw = document.getElementById("bNetWorth");
+  nw.textContent = (netWorth>=0?"+":"-")+fmt(netWorth);
+  nw.style.color = netWorth>=0?"var(--green)":"var(--red)";
 }
 
 function renderBudget() {
@@ -623,11 +633,12 @@ function renderHistory() {
   document.getElementById("historyList").innerHTML=txns.map(t=>{
     const isInc=t.type==="income";
     const isSav=t.type==="saving";
-    const icon=isInc?"💵":isSav?"💰":(DATA.budgetCats?.[t.cat]?.icon||"💸");
+    const isDebt=t.type==="debt_payment";
+    const icon=isInc?"💵":isSav?"💰":isDebt?"💳":(DATA.budgetCats?.[t.cat]?.icon||"💸");
     const col=isInc?"var(--green)":isSav?"var(--purple)":"var(--red)";
-    const catName=isInc?"Thu nhập":isSav?"Tiết kiệm — "+(t.note||t.cat):(DATA.budgetCats?.[t.cat]?.name||t.cat||"Chi tiêu");
+    const catName=isInc?"Thu nhập":isSav?"Tiết kiệm — "+(t.note||t.cat):isDebt?"Trả nợ — "+(t.note||t.cat):(DATA.budgetCats?.[t.cat]?.name||t.cat||"Chi tiêu");
     return `<div class="txn">
-      <div class="txn-icon" style="background:${isInc?"#064e3b":isSav?"#2d1f4e":"#7f1d1d"}">${icon}</div>
+      <div class="txn-icon" style="background:${isInc?"#064e3b":isSav?"#2d1f4e":isDebt?"#4a1020":"#7f1d1d"}">${icon}</div>
       <div class="txn-info">
         <div class="txn-name">${catName}${!isSav&&t.note?" — "+t.note:""}</div>
         <div class="txn-meta">${t.date}</div>
@@ -749,7 +760,10 @@ function payDebt(){
   const d=DATA.debts[curDebtKey];
   if (d.remaining===undefined) d.remaining=d.total;
   d.remaining=Math.max(0,d.remaining-amt);
-  saveData();renderDebts();renderHeader();
+  // Record as transaction so it deducts from monthly available balance
+  if (!DATA.txns) DATA.txns=[];
+  DATA.txns.push({id:Date.now().toString(),type:"debt_payment",amount:amt,cat:curDebtKey,note:(d.icon||"")+" "+(d.name||curDebtKey),monthKey:mk(),date:today()});
+  saveData();render();
   document.getElementById("dPayAmt").value="";
   showToast(`-${fmt(amt)} đã trả nợ ✓`);
 }
