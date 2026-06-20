@@ -387,7 +387,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
       <div class="widget-month" id="widgetMonth">—</div>
     </div>
     <div>
-      <div class="widget-nw-label">Tài sản ròng</div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-bottom:3px">
+        <div class="widget-nw-label" style="margin-bottom:0">Tài sản ròng</div>
+        <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+      </div>
       <div class="widget-nw-val" id="bNetWorth">$0</div>
     </div>
   </div>
@@ -400,7 +403,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 
 <!-- DEBT PILL -->
 <div class="debt-pill">
-  <div class="debt-pill-label">Tổng nợ còn lại</div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="debt-pill-label">Tổng nợ còn lại</div>
+    <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:var(--label3);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+  </div>
   <div class="debt-pill-val" id="bDebt">$0</div>
 </div>
 
@@ -508,6 +514,16 @@ let DATA = null, synced = false;
 let curLogType = "expense", curCat = null, curGoalKey = null, curDebtKey = null, pendingTxn = null;
 let editingBudgetKey = null, editingGoalKey = null, editingDebtKey = null;
 let historyMonth = null;
+let sensitiveHidden = false;
+
+function eyeOnSvg()  { return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
+function eyeOffSvg() { return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`; }
+
+function toggleSensitive() {
+  sensitiveHidden = !sensitiveHidden;
+  document.querySelectorAll(".eye-btn").forEach(b => b.innerHTML = sensitiveHidden ? eyeOffSvg() : eyeOnSvg());
+  renderHeader();
+}
 
 // ══ HELPERS ══
 const fmt   = n => "$"+Math.abs(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -600,16 +616,18 @@ function renderHeader() {
   const totalAssets    = Object.values(DATA.assets||{}).reduce((s,a)=>s+a.value,0);
   const netWorth       = bal + totalSaved + totalAssets - totalDebt;
 
+  const masked = "••••••";
   document.getElementById("bIncome").textContent  = fmt(income);
   document.getElementById("bExpense").textContent = fmt(expense);
   const bb = document.getElementById("bBalance");
   bb.textContent = (bal>=0?"+":"-")+fmt(bal);
   bb.style.color = bal>=0?"#fff":"var(--red)";
   document.getElementById("bSavings").textContent = fmt(monthlySavings);
-  document.getElementById("bDebt").textContent    = fmt(totalDebt);
+  document.getElementById("bDebt").textContent    = sensitiveHidden ? masked : fmt(totalDebt);
   const nw = document.getElementById("bNetWorth");
-  nw.textContent = (netWorth>=0?"+":"-")+fmt(netWorth);
-  nw.style.color = netWorth>=0?"var(--green)":"var(--red)";
+  nw.textContent = sensitiveHidden ? masked : (netWorth>=0?"+":"-")+fmt(netWorth);
+  nw.style.color = sensitiveHidden ? "var(--label3)" : (netWorth>=0?"var(--green)":"var(--red)");
+  document.querySelectorAll(".eye-btn").forEach(b => { if (!b.innerHTML) b.innerHTML = eyeOnSvg(); });
 }
 
 function renderBudget() {
