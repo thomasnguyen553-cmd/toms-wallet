@@ -114,6 +114,9 @@ input,select{outline:none}
 .footer-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 16px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:center}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5}
+.asset-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.asset-type-btn{padding:9px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--muted);cursor:pointer;font-size:11px;font-weight:600;text-align:center;transition:all .15s}
+.asset-type-btn.active{border-color:var(--accent);background:#1e3a5f;color:var(--accent)}
 </style>
 </head>
 <body>
@@ -253,6 +256,54 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
   </div>
 </div>
 
+<!-- ADD ASSET MODAL -->
+<div class="modal-bg hidden" id="assetModal">
+  <div class="modal">
+    <div class="modal-title">💎 Thêm tài sản</div>
+    <div class="field-label">Loại tài sản</div>
+    <div class="asset-type-grid">
+      <button class="asset-type-btn" onclick="selectAssetType('superannuation',this)">🏦 Superannuation</button>
+      <button class="asset-type-btn" onclick="selectAssetType('car',this)">🚗 Xe hơi</button>
+      <button class="asset-type-btn" onclick="selectAssetType('property',this)">🏠 Bất động sản</button>
+      <button class="asset-type-btn" onclick="selectAssetType('investment',this)">📈 Đầu tư</button>
+      <button class="asset-type-btn" onclick="selectAssetType('cash',this)">💵 Tiền mặt</button>
+      <button class="asset-type-btn" onclick="selectAssetType('other',this)">📦 Khác</button>
+    </div>
+    <div class="field-label">Tên tài sản</div>
+    <input class="inp" id="aName" placeholder="vd: Super, Toyota Camry…">
+    <div class="field-label">Giá trị ước tính (AUD)</div>
+    <input type="number" class="inp" id="aValue" placeholder="50000">
+    <div class="modal-btns">
+      <button class="modal-btn btn-blue" onclick="saveAsset()">Lưu</button>
+      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('assetModal')">Hủy</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ASSET MODAL -->
+<div class="modal-bg hidden" id="editAssetModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Sửa tài sản</div>
+    <div class="field-label">Loại tài sản</div>
+    <div class="asset-type-grid">
+      <button class="asset-type-btn" onclick="selectEditAssetType('superannuation',this)">🏦 Superannuation</button>
+      <button class="asset-type-btn" onclick="selectEditAssetType('car',this)">🚗 Xe hơi</button>
+      <button class="asset-type-btn" onclick="selectEditAssetType('property',this)">🏠 Bất động sản</button>
+      <button class="asset-type-btn" onclick="selectEditAssetType('investment',this)">📈 Đầu tư</button>
+      <button class="asset-type-btn" onclick="selectEditAssetType('cash',this)">💵 Tiền mặt</button>
+      <button class="asset-type-btn" onclick="selectEditAssetType('other',this)">📦 Khác</button>
+    </div>
+    <div class="field-label">Tên tài sản</div>
+    <input class="inp" id="eaName" placeholder="vd: Super, Toyota Camry…">
+    <div class="field-label">Giá trị ước tính (AUD)</div>
+    <input type="number" class="inp" id="eaValue" placeholder="50000">
+    <div class="modal-btns">
+      <button class="modal-btn btn-blue" onclick="saveEditAsset()">Lưu</button>
+      <button class="modal-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="closeModal('editAssetModal')">Hủy</button>
+    </div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-top">
@@ -289,6 +340,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
   <button class="tab" onclick="showTab('log',this)">➕ Ghi</button>
   <button class="tab" onclick="showTab('savings',this)">🎯 Tiết kiệm</button>
   <button class="tab" onclick="showTab('debt',this)">💳 Nợ</button>
+  <button class="tab" onclick="showTab('assets',this)">💎 Tài sản</button>
   <button class="tab" onclick="showTab('history',this)">📋 Lịch sử</button>
 </div>
 
@@ -360,6 +412,16 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
   </div>
 </div>
 
+<!-- ASSETS TAB -->
+<div class="content hidden" id="tab-assets">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700">Tài sản của tôi</div>
+    <button class="btn btn-blue" style="width:auto;padding:8px 14px;margin:0;font-size:12px" onclick="openModal('assetModal')">+ Thêm</button>
+  </div>
+  <div id="assetList"></div>
+  <div id="assetTotal" style="margin-top:4px"></div>
+</div>
+
 <!-- HISTORY TAB -->
 <div class="content hidden" id="tab-history">
   <div style="font-size:14px;font-weight:700;margin-bottom:10px">Lịch sử giao dịch</div>
@@ -410,7 +472,7 @@ window._defaultData = () => ({
     family:   {name:"Hỗ trợ gia đình",icon:"👨‍👩‍👧",limit:550},
     misc:     {name:"Linh tinh",    icon:"📦",limit:100},
   },
-  goals:{}, debts:{}, txns:[], budgetAdj:{}
+  goals:{}, debts:{}, assets:{}, txns:[], budgetAdj:{}
 });
 
 // ══ FIREBASE ══
@@ -438,7 +500,7 @@ function saveData() { if(window._saveDB) window._saveDB(DATA); }
 // ══ RENDER ══
 function render() {
   if (!DATA) return;
-  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderHistory(); renderAlerts();
+  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts();
 }
 
 function monthSpend(mkey) {
@@ -455,7 +517,8 @@ function renderHeader() {
   const bal            = income-expense;
   const totalDebt      = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
   const totalSaved     = Object.values(DATA.goals||{}).reduce((s,g)=>s+(g.saved||0),0);
-  const netWorth       = bal + totalSaved - totalDebt;
+  const totalAssets    = Object.values(DATA.assets||{}).reduce((s,a)=>s+a.value,0);
+  const netWorth       = bal + totalSaved + totalAssets - totalDebt;
 
   document.getElementById("bIncome").textContent  = fmt(income);
   document.getElementById("bExpense").textContent = fmt(expense);
@@ -662,7 +725,7 @@ function renderAlerts() {
 
 // ══ TABS ══
 function showTab(name,btn) {
-  ["budget","log","savings","debt","history"].forEach(t=>{
+  ["budget","log","savings","debt","assets","history"].forEach(t=>{
     document.getElementById("tab-"+t).classList.toggle("hidden",t!==name);
   });
   document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
@@ -768,6 +831,88 @@ function payDebt(){
   showToast(`-${fmt(amt)} đã trả nợ ✓`);
 }
 function deleteDebt(k){delete DATA.debts[k];if(curDebtKey===k)curDebtKey=null;saveData();render();}
+
+// ══ ASSETS ══
+const ASSET_TYPES = {
+  superannuation: {label:"Superannuation", icon:"🏦"},
+  car:            {label:"Xe hơi",          icon:"🚗"},
+  property:       {label:"Bất động sản",    icon:"🏠"},
+  investment:     {label:"Đầu tư",          icon:"📈"},
+  cash:           {label:"Tiền mặt",        icon:"💵"},
+  other:          {label:"Khác",            icon:"📦"},
+};
+let newAssetType="other", editAssetType="other", editingAssetKey=null;
+
+function selectAssetType(type, btn) {
+  newAssetType=type;
+  document.querySelectorAll("#assetModal .asset-type-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+}
+function selectEditAssetType(type, btn) {
+  editAssetType=type;
+  document.querySelectorAll("#editAssetModal .asset-type-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function renderAssets() {
+  const assets=DATA.assets||{};
+  const total=Object.values(assets).reduce((s,a)=>s+a.value,0);
+  let html="";
+  Object.entries(assets).forEach(([k,a])=>{
+    const t=ASSET_TYPES[a.type]||ASSET_TYPES.other;
+    html+=`<div class="card">
+      <div class="card-top">
+        <div class="card-name">${t.icon} ${a.name}<span style="font-size:10px;color:var(--muted);margin-left:6px;font-weight:400">${t.label}</span></div>
+        <div class="card-amt" style="color:var(--accent)">${fmt(a.value)}</div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn edit" onclick="openEditAsset('${k}')">✏️ Sửa</button>
+        <button class="act-btn del" onclick="deleteAsset('${k}')">🗑 Xóa</button>
+      </div>
+    </div>`;
+  });
+  if (!Object.keys(assets).length) html=`<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Chưa có tài sản.<br>Nhấn + Thêm để bắt đầu.</div>`;
+  document.getElementById("assetList").innerHTML=html;
+  document.getElementById("assetTotal").innerHTML=Object.keys(assets).length
+    ? `<div class="card" style="background:var(--surface2);margin-top:4px"><div class="card-top" style="margin:0"><div style="font-weight:700">Tổng tài sản</div><div class="card-amt" style="color:var(--accent);font-size:14px">${fmt(total)}</div></div></div>`
+    : "";
+}
+
+function saveAsset() {
+  const name=document.getElementById("aName").value.trim();
+  const value=parseFloat(document.getElementById("aValue").value);
+  if (!name||!value){showToast("Điền đủ thông tin","err");return;}
+  if (!DATA.assets) DATA.assets={};
+  const key="a"+Date.now();
+  DATA.assets[key]={name,type:newAssetType,value};
+  saveData();render();closeModal("assetModal");
+  document.getElementById("aName").value="";
+  document.getElementById("aValue").value="";
+  showToast("Đã thêm tài sản ✓");
+}
+
+function openEditAsset(k) {
+  editingAssetKey=k;
+  const a=DATA.assets[k];
+  editAssetType=a.type||"other";
+  document.getElementById("eaName").value=a.name;
+  document.getElementById("eaValue").value=a.value;
+  document.querySelectorAll("#editAssetModal .asset-type-btn").forEach(b=>b.classList.remove("active"));
+  const idx=Object.keys(ASSET_TYPES).indexOf(editAssetType);
+  const btns=document.querySelectorAll("#editAssetModal .asset-type-btn");
+  if (btns[idx]) btns[idx].classList.add("active");
+  openModal("editAssetModal");
+}
+
+function saveEditAsset() {
+  const name=document.getElementById("eaName").value.trim();
+  const value=parseFloat(document.getElementById("eaValue").value);
+  if (!name||!value){showToast("Điền đủ thông tin","err");return;}
+  DATA.assets[editingAssetKey]={name,type:editAssetType,value};
+  saveData();render();closeModal("editAssetModal");showToast("Đã cập nhật tài sản ✓");
+}
+
+function deleteAsset(k){delete DATA.assets[k];saveData();render();}
 
 // ══ BUDGET CRUD ══
 function openEditBudget(k) {
