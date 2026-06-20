@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Tom's Wallet</title>
+<script>(function(){const t=localStorage.getItem("tw_theme");if(t==="light")document.documentElement.setAttribute("data-theme","light");})()</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -171,6 +172,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 .modal-btns{display:flex;gap:8px;margin-top:4px}
 .modal-btn{flex:1;padding:14px;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;display:none;max-width:80vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap}
+
+/* LIGHT MODE */
+[data-theme="light"]{
+  --bg:#F2F2F7;--bg2:#fff;--bg3:#F2F2F7;--bg4:#E5E5EA;
+  --label:#000;--label2:rgba(60,60,67,.6);--label3:rgba(60,60,67,.3);
+  --sep:rgba(60,60,67,.29);
+  --blue:#007AFF;--green:#34C759;--red:#FF3B30;--orange:#FF9500;--purple:#AF52DE;
+}
+[data-theme="light"] .tab-bar{background:rgba(242,242,247,.88);border-top-color:rgba(0,0,0,.12)}
+[data-theme="light"] .widget-stats .ws{background:rgba(0,0,0,.04)}
+[data-theme="light"] .widget-stats{background:rgba(0,0,0,.07)}
+[data-theme="light"] .ios-badge{opacity:.9}
+
+/* THEME TOGGLE */
+.theme-btn{background:var(--bg2);border:none;border-radius:9px;padding:5px 9px;font-size:17px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 
 /* LOCK SCREEN */
 #lockScreen{position:fixed;inset:0;background:#000;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;transition:opacity .3s}
@@ -399,7 +415,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
       <div class="nav-eyebrow">Quản lý tài chính</div>
       <div class="nav-title">Tom's <span>Wallet</span></div>
     </div>
-    <div class="month-chip" id="monthBadge">—</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+      <div class="month-chip" id="monthBadge">—</div>
+    </div>
   </div>
   <div class="sync-row">
     <div class="sync-dot" id="syncDot" style="background:var(--orange)"></div>
@@ -636,6 +655,20 @@ async function authenticate() {
     btn.onclick = authenticate;
     authenticate();
   }
+})();
+
+// ══ THEME ══
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  const next = isLight ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next === "dark" ? "" : "light");
+  localStorage.setItem("tw_theme", next);
+  document.getElementById("themeBtn").textContent = next === "light" ? "🌙" : "☀️";
+}
+(function applyThemeBtn() {
+  const saved = localStorage.getItem("tw_theme") || "dark";
+  const btn = document.getElementById("themeBtn");
+  if (btn) btn.textContent = saved === "light" ? "🌙" : "☀️";
 })();
 
 // ══ STATE ══
