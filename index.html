@@ -998,6 +998,18 @@ function renderHistory() {
 function renderAlerts() {
   const sp=monthSpend(), cats=DATA.budgetCats||{};
   const alerts=[];
+
+  // Total budget summary
+  const totalBudget = Object.values(cats).reduce((s,c)=>s+c.limit,0);
+  const tSpent = Object.keys(cats).reduce((s,k)=>s+(sp[k]||0),0);
+  const tOver  = tSpent - totalBudget;
+  if (tOver > 0) {
+    alerts.push(`<div class="ios-alert ios-alert-red" style="display:flex;justify-content:space-between;align-items:center">
+      <span>📊 Tổng chi vượt budget tháng này</span>
+      <b style="white-space:nowrap;margin-left:10px">${fmt(tOver)}</b>
+    </div>`);
+  }
+
   Object.entries(cats).forEach(([k,c])=>{
     const spent=sp[k]||0, limit=c.limit;
     if (spent>limit) alerts.push(`<div class="ios-alert ios-alert-red">⚠️ <b>${c.name}</b> vượt ngân sách ${fmt(spent-limit)} tháng này.</div>`);
@@ -1015,7 +1027,7 @@ function renderAlerts() {
       <button onclick="rolloverBalance(${prevBal})" style="background:var(--blue);color:#fff;border:none;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Thêm</button>
     </div>`);
   }
-  document.getElementById("alertZone").innerHTML=alerts.slice(0,4).join("");
+  document.getElementById("alertZone").innerHTML=alerts.slice(0,6).join("");
 }
 
 function rolloverBalance(amt) {
