@@ -455,7 +455,7 @@ function renderHeader() {
   const bal            = income-expense;
   const totalDebt      = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
   const totalSaved     = Object.values(DATA.goals||{}).reduce((s,g)=>s+(g.saved||0),0);
-  const netWorth       = totalSaved - totalDebt;
+  const netWorth       = bal + totalSaved - totalDebt;
 
   document.getElementById("bIncome").textContent  = fmt(income);
   document.getElementById("bExpense").textContent = fmt(expense);
