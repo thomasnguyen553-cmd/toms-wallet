@@ -720,7 +720,28 @@ function renderAlerts() {
     if (spent>limit) alerts.push(`<div class="alert alert-red">⚠️ <b>${c.name}</b> vượt ngân sách ${fmt(spent-limit)} tháng này.</div>`);
     else if (spent>limit*.85) alerts.push(`<div class="alert alert-yellow">🔔 <b>${c.name}</b> đã dùng ${Math.round(spent/limit*100)}% ngân sách.</div>`);
   });
-  document.getElementById("alertZone").innerHTML=alerts.slice(0,3).join("");
+  // Rollover suggestion
+  const prevMonth = (()=>{ const d=new Date(); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
+  const txns=DATA.txns||[];
+  const prevIncome  = txns.filter(t=>t.monthKey===prevMonth&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+  const prevExpense = txns.filter(t=>t.monthKey===prevMonth&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
+  const prevBal = prevIncome - prevExpense;
+  const alreadyRolled = txns.some(t=>t.monthKey===mk()&&t.rollover===true);
+  if (prevBal>0 && !alreadyRolled && prevIncome>0) {
+    alerts.unshift(`<div class="alert alert-blue" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span>💡 Tháng trước còn dư <b>${fmt(prevBal)}</b></span>
+      <button onclick="rolloverBalance(${prevBal})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">+ Thêm vào tháng này</button>
+    </div>`);
+  }
+  document.getElementById("alertZone").innerHTML=alerts.slice(0,4).join("");
+}
+
+function rolloverBalance(amt) {
+  if (!DATA.txns) DATA.txns=[];
+  const prevMonth = (()=>{ const d=new Date(); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
+  DATA.txns.push({id:Date.now().toString(),type:"income",amount:amt,cat:"income",note:`Số dư tháng ${prevMonth}`,date:today(),monthKey:mk(),rollover:true});
+  saveData();render();
+  showToast(`+${fmt(amt)} số dư tháng trước đã thêm ✓`);
 }
 
 // ══ TABS ══
