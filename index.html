@@ -275,7 +275,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.
   <div class="bal-card"><div class="bal-label">Thu nhập tháng này</div><div class="bal-val" style="color:var(--green)" id="bIncome">$0</div></div>
   <div class="bal-card"><div class="bal-label">Đã chi tiêu</div><div class="bal-val" style="color:var(--red)" id="bExpense">$0</div></div>
   <div class="bal-card"><div class="bal-label">Còn lại tháng này</div><div class="bal-val" id="bBalance">$0</div></div>
-  <div class="bal-card"><div class="bal-label">Tổng nợ còn lại</div><div class="bal-val" style="color:var(--purple)" id="bDebt">$0</div></div>
+  <div class="bal-card"><div class="bal-label">Tiết kiệm tháng này</div><div class="bal-val" style="color:var(--purple)" id="bSavings">$0</div></div>
 </div>
 
 <!-- ALERTS -->
@@ -447,16 +447,16 @@ function monthSpend(mkey) {
 
 function renderHeader() {
   const m=mk(), txns=DATA.txns||[];
-  const income  = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving")).reduce((s,t)=>s+t.amount,0);
+  const income   = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+  const expense  = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving")).reduce((s,t)=>s+t.amount,0);
+  const monthlySavings = txns.filter(t=>t.monthKey===m&&t.type==="saving").reduce((s,t)=>s+t.amount,0);
   const bal = income-expense;
-  const totalDebt = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
-  document.getElementById("bIncome").textContent  = fmt(income);
-  document.getElementById("bExpense").textContent = fmt(expense);
+  document.getElementById("bIncome").textContent   = fmt(income);
+  document.getElementById("bExpense").textContent  = fmt(expense);
   const bb = document.getElementById("bBalance");
   bb.textContent = (bal>=0?"+":"-")+fmt(bal);
   bb.style.color = bal>=0?"var(--green)":"var(--red)";
-  document.getElementById("bDebt").textContent = fmt(totalDebt);
+  document.getElementById("bSavings").textContent  = fmt(monthlySavings);
 }
 
 function renderBudget() {
