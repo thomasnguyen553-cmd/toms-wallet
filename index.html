@@ -474,6 +474,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   </div>
   <div id="budgetList"></div>
   <div id="nextMonthAdj"></div>
+  <div id="spendingLog"></div>
 </div>
 
 <!-- LOG TAB -->
@@ -678,6 +679,7 @@ let curLogType = "expense", curCat = null, curGoalKey = null, curDebtKey = null,
 let editingBudgetKey = null, editingGoalKey = null, editingDebtKey = null;
 let historyMonth = null;
 let historyCat = null;
+let spendLogCat = null;
 let sensitiveHidden = true;
 
 function eyeOnSvg()  { return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
@@ -760,7 +762,7 @@ function saveData() { if(window._saveDB) window._saveDB(DATA); }
 // ══ RENDER ══
 function render() {
   if (!DATA) return;
-  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts();
+  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts(); renderSpendingLog();
 }
 
 function monthSpend(mkey) {
@@ -824,6 +826,45 @@ function renderBudget() {
   document.getElementById("budgetList").innerHTML=`<div class="ios-list">${items}</div>`;
   renderNextMonthAdj(sp);
 }
+
+function renderSpendingLog() {
+  const cats=DATA.budgetCats||{}, m=mk();
+  const catChips=[
+    {key:null,label:"Tất cả"},
+    ...Object.entries(cats).map(([k,c])=>({key:k,label:c.icon+" "+c.name}))
+  ];
+  let txns=(DATA.txns||[]).filter(t=>t.monthKey===m&&t.type==="expense");
+  if (spendLogCat!==null) txns=txns.filter(t=>t.cat===spendLogCat);
+  txns=txns.slice().reverse();
+  const total=txns.reduce((s,t)=>s+t.amount,0);
+
+  const chips=`<div style="overflow-x:auto;white-space:nowrap;padding:0;-webkit-overflow-scrolling:touch;margin:6px -16px 10px;padding-left:16px">
+    ${catChips.map(ch=>`<button class="month-chip-btn ${spendLogCat===ch.key?"active":""}" onclick="setSpendLogCat(${ch.key===null?"null":"'"+ch.key+"'"})">${ch.label}</button>`).join("")}
+  </div>`;
+
+  const rows=txns.length
+    ?txns.map(t=>{
+        const cat=cats[t.cat]||{};
+        return `<div class="txn-item">
+          <div class="txn-icon" style="background:${iconBg(t.cat||"x")}">${cat.icon||"💸"}</div>
+          <div class="txn-info">
+            <div class="txn-name">${cat.name||t.cat||"Chi tiêu"}${t.note?" — "+t.note:""}</div>
+            <div class="txn-meta">${t.date}</div>
+          </div>
+          <div class="txn-amt" style="color:var(--red)">−${fmt(t.amount)}</div>
+          <button class="del-btn" onclick="deleteTxn('${t.id}')">×</button>
+        </div>`;
+      }).join("")
+    :`<div style="text-align:center;color:var(--label2);padding:28px;font-size:14px">Chưa có chi tiêu${spendLogCat?" trong danh mục này":""} tháng này.</div>`;
+
+  document.getElementById("spendingLog").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0 2px">
+      <div style="font-size:17px;font-weight:700">Chi tiêu tháng này</div>
+      <div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(total)}</div>
+    </div>
+    ${chips}${rows}`;
+}
+function setSpendLogCat(c){spendLogCat=c;renderSpendingLog();}
 
 function renderNextMonthAdj(sp) {
   const cats=DATA.budgetCats||{};
