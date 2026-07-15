@@ -474,7 +474,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   </div>
   <div id="budgetList"></div>
   <div id="nextMonthAdj"></div>
-  <div id="spendingLog"></div>
 </div>
 
 <!-- LOG TAB -->
@@ -548,6 +547,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 <!-- HISTORY TAB -->
 <div class="content hidden" id="tab-history">
   <div class="content-header"><div class="content-title">Lịch sử</div></div>
+  <div id="kpiBoard"></div>
   <div class="month-filter" id="monthFilterRow"></div>
   <div class="month-filter" id="catFilterRow"></div>
   <div id="historyList"></div>
@@ -679,7 +679,7 @@ let curLogType = "expense", curCat = null, curGoalKey = null, curDebtKey = null,
 let editingBudgetKey = null, editingGoalKey = null, editingDebtKey = null;
 let historyMonth = null;
 let historyCat = null;
-let spendLogCat = null;
+let openBudgetCat = null;
 let sensitiveHidden = true;
 
 function eyeOnSvg()  { return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`; }
@@ -762,7 +762,7 @@ function saveData() { if(window._saveDB) window._saveDB(DATA); }
 // ══ RENDER ══
 function render() {
   if (!DATA) return;
-  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts(); renderSpendingLog();
+  renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts();
 }
 
 function monthSpend(mkey) {
@@ -799,13 +799,35 @@ function renderHeader() {
 function renderBudget() {
   const sp=monthSpend(), m=mk(), adj=(DATA.budgetAdj||{})[m]||{};
   const cats=DATA.budgetCats||{};
+
+  // Monthly total summary card
+  const totalBudget=Object.values(cats).reduce((s,c)=>s+c.limit,0);
+  const tSpent=Object.keys(cats).reduce((s,k)=>s+(sp[k]||0),0);
+  const tRemain=totalBudget-tSpent;
+  const isOver=tRemain<0;
+  const tPct=totalBudget>0?Math.min((tSpent/totalBudget)*100,100):0;
+  const summary=Object.keys(cats).length?`<div style="background:var(--bg2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:15px;font-weight:600">Tổng ngân sách tháng</div>
+      <div style="font-size:15px;font-weight:700">${fmt(totalBudget)}</div>
+    </div>
+    <div style="background:var(--bg4);border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">
+      <div style="height:100%;width:${tPct}%;background:${isOver?"var(--red)":tPct>85?"var(--orange)":"var(--blue)"};border-radius:99px;transition:width .4s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span style="color:var(--label2)">Đã chi <b style="color:${isOver?"var(--red)":"var(--label)"}">${fmt(tSpent)}</b></span>
+      <span style="color:${isOver?"var(--red)":"var(--green)"}">${isOver?"Vượt "+fmt(-tRemain):"Còn "+fmt(tRemain)}</span>
+    </div>
+  </div>`:"";
+
   let items="";
   Object.entries(cats).forEach(([k,c])=>{
     const limit=c.limit+(adj[k]||0), spent=sp[k]||0;
     const pct=Math.min((spent/limit)*100,100), over=spent>limit, warn=spent>limit*.8;
     const col=over?"var(--red)":warn?"var(--orange)":"var(--label)";
     const barCol=over?"var(--red)":warn?"var(--orange)":"var(--blue)";
-    items+=`<div class="ios-row">
+    const isOpen=openBudgetCat===k;
+    items+=`<div class="ios-row" style="cursor:pointer" onclick="toggleBudgetCat('${k}')">
       <div class="ios-icon" style="background:${iconBg(k)}">${c.icon}</div>
       <div class="ios-info">
         <div class="ios-name">${c.name}${over?`<span class="ios-badge" style="background:rgba(255,69,58,.2);color:var(--red)">VƯỢT</span>`:warn?`<span class="ios-badge" style="background:rgba(255,159,10,.2);color:var(--orange)">GẦN HẾT</span>`:""}</div>
@@ -815,56 +837,36 @@ function renderBudget() {
       <div class="ios-right">
         <div class="ios-amt" style="color:${col}">${fmt(spent)}</div>
         <div class="ios-sub2" style="color:${over?"var(--red)":"var(--label2)"}">${over?"Vượt "+fmt(spent-limit):"Còn "+fmt(limit-spent)}</div>
-        <div class="row-actions">
-          <button class="row-btn" style="color:var(--blue)" onclick="event.stopPropagation();openEditBudget('${k}')">Sửa</button>
-          <button class="row-btn" style="color:var(--red)" onclick="event.stopPropagation();deleteBudgetCat('${k}')">Xóa</button>
+        <div style="color:var(--label3);font-size:12px;margin-top:3px;text-align:right">${isOpen?"▲":"▼"}</div>
+        <div class="row-actions" onclick="event.stopPropagation()">
+          <button class="row-btn" style="color:var(--blue)" onclick="openEditBudget('${k}')">Sửa</button>
+          <button class="row-btn" style="color:var(--red)" onclick="deleteBudgetCat('${k}')">Xóa</button>
         </div>
       </div>
     </div>`;
+    if (isOpen) {
+      const catTxns=(DATA.txns||[]).filter(t=>t.monthKey===m&&t.type==="expense"&&t.cat===k).slice().reverse();
+      if (catTxns.length) {
+        catTxns.forEach(t=>{
+          items+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--sep);background:var(--bg3)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500">${t.note||c.name}</div>
+              <div style="font-size:11px;color:var(--label2);margin-top:1px">${t.date}</div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--red)">−${fmt(t.amount)}</div>
+            <button class="del-btn" onclick="event.stopPropagation();deleteTxn('${t.id}')">×</button>
+          </div>`;
+        });
+      } else {
+        items+=`<div style="padding:12px 14px;border-top:1px solid var(--sep);background:var(--bg3);font-size:13px;color:var(--label2);text-align:center">Chưa có giao dịch tháng này</div>`;
+      }
+    }
   });
   if (!Object.keys(cats).length) items=`<div style="text-align:center;color:var(--label2);padding:40px;font-size:14px">Chưa có danh mục.<br>Nhấn + Thêm để bắt đầu.</div>`;
-  document.getElementById("budgetList").innerHTML=`<div class="ios-list">${items}</div>`;
+  document.getElementById("budgetList").innerHTML=summary+`<div class="ios-list">${items}</div>`;
   renderNextMonthAdj(sp);
 }
-
-function renderSpendingLog() {
-  const cats=DATA.budgetCats||{}, m=mk();
-  const catChips=[
-    {key:null,label:"Tất cả"},
-    ...Object.entries(cats).map(([k,c])=>({key:k,label:c.icon+" "+c.name}))
-  ];
-  let txns=(DATA.txns||[]).filter(t=>t.monthKey===m&&t.type==="expense");
-  if (spendLogCat!==null) txns=txns.filter(t=>t.cat===spendLogCat);
-  txns=txns.slice().reverse();
-  const total=txns.reduce((s,t)=>s+t.amount,0);
-
-  const chips=`<div style="overflow-x:auto;white-space:nowrap;padding:0;-webkit-overflow-scrolling:touch;margin:6px -16px 10px;padding-left:16px">
-    ${catChips.map(ch=>`<button class="month-chip-btn ${spendLogCat===ch.key?"active":""}" onclick="setSpendLogCat(${ch.key===null?"null":"'"+ch.key+"'"})">${ch.label}</button>`).join("")}
-  </div>`;
-
-  const rows=txns.length
-    ?txns.map(t=>{
-        const cat=cats[t.cat]||{};
-        return `<div class="txn-item">
-          <div class="txn-icon" style="background:${iconBg(t.cat||"x")}">${cat.icon||"💸"}</div>
-          <div class="txn-info">
-            <div class="txn-name">${cat.name||t.cat||"Chi tiêu"}${t.note?" — "+t.note:""}</div>
-            <div class="txn-meta">${t.date}</div>
-          </div>
-          <div class="txn-amt" style="color:var(--red)">−${fmt(t.amount)}</div>
-          <button class="del-btn" onclick="deleteTxn('${t.id}')">×</button>
-        </div>`;
-      }).join("")
-    :`<div style="text-align:center;color:var(--label2);padding:28px;font-size:14px">Chưa có chi tiêu${spendLogCat?" trong danh mục này":""} tháng này.</div>`;
-
-  document.getElementById("spendingLog").innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0 2px">
-      <div style="font-size:17px;font-weight:700">Chi tiêu tháng này</div>
-      <div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(total)}</div>
-    </div>
-    ${chips}${rows}`;
-}
-function setSpendLogCat(c){spendLogCat=c;renderSpendingLog();}
+function toggleBudgetCat(k){openBudgetCat=openBudgetCat===k?null:k;renderBudget();}
 
 function renderNextMonthAdj(sp) {
   const cats=DATA.budgetCats||{};
@@ -1007,9 +1009,28 @@ function renderAssets() {
 }
 
 function renderHistory() {
-  const allMonths=[...new Set((DATA.txns||[]).map(t=>t.monthKey))].sort().reverse();
+  const allTxns=DATA.txns||[];
+  const allMonths=[...new Set(allTxns.map(t=>t.monthKey))].sort().reverse();
   if (!allMonths.includes(mk())) allMonths.unshift(mk());
   if (!historyMonth||!allMonths.includes(historyMonth)) historyMonth=allMonths[0]||mk();
+
+  // KPI board — monthly balance dots
+  const kpiMonths=allMonths.slice(0,12);
+  document.getElementById("kpiBoard").innerHTML=`<div style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;margin:0 -16px 4px;padding:0 16px 4px">
+    ${kpiMonths.map(m=>{
+      const inc=allTxns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+      const exp=allTxns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
+      const bal=inc-exp, pos=bal>=0, isActive=historyMonth===m;
+      return `<div onclick="setHistoryMonth('${m}')" style="display:inline-block;vertical-align:top;margin-right:6px;background:${isActive?"var(--bg3)":"var(--bg2)"};border-radius:13px;padding:10px 12px;cursor:pointer;border:1.5px solid ${isActive?"var(--blue)":"transparent"};min-width:88px">
+        <div style="font-size:9px;color:var(--label2);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase">${fmtMonthLabel(m)}</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${pos?"var(--green)":"var(--red)"};flex-shrink:0"></div>
+          <div style="font-size:13px;font-weight:700;color:${pos?"var(--green)":"var(--red)"};white-space:nowrap">${pos?"+":""}${fmt(bal)}</div>
+        </div>
+        <div style="font-size:10px;color:var(--label3);white-space:nowrap">${fmt(inc)} thu</div>
+      </div>`;
+    }).join("")}
+  </div>`;
 
   document.getElementById("monthFilterRow").innerHTML=allMonths.map(m=>
     `<button class="month-chip-btn ${historyMonth===m?"active":""}" onclick="setHistoryMonth('${m}')">${fmtMonthLabel(m)}</button>`
