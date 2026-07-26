@@ -205,6 +205,19 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 <body>
 <div class="toast" id="toast"></div>
 
+<!-- NOTIFICATION GUIDE MODAL -->
+<div class="modal-bg hidden" id="notifGuideModal">
+  <div class="modal">
+    <div class="modal-title">🔔 Bật thông báo trên iPhone</div>
+    <div style="font-size:14px;color:var(--label2);line-height:1.9;margin-bottom:6px">
+      iOS chỉ cho phép thông báo web khi app được thêm vào <b style="color:var(--label)">màn hình chính</b>.
+    </div>
+    <div id="notifSteps" style="background:var(--bg3);border-radius:13px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:2"></div>
+    <button class="btn btn-blue" onclick="copyLink();showToast('Đã copy — dán vào Safari ✓');closeModal('notifGuideModal')">📋 Copy link để mở trong Safari</button>
+    <button class="btn btn-ghost" style="margin-top:0" onclick="closeModal('notifGuideModal')">Đóng</button>
+  </div>
+</div>
+
 <!-- WARN MODAL -->
 <div class="modal-bg hidden" id="warnModal">
   <div class="modal">
@@ -686,6 +699,15 @@ const NOTIF_ON_KEY   = "tw_notif_on";
   if (btn) btn.textContent = on ? "🔔" : "🔕";
 })();
 
+function showNotifGuide() {
+  const isChrome = /CriOS/.test(navigator.userAgent);
+  const steps = isChrome
+    ? `1️⃣ Copy link bên dưới<br>2️⃣ Mở <b style="color:var(--label)">Safari</b> (không dùng Chrome)<br>3️⃣ Dán link và mở trang<br>4️⃣ Nhấn nút <b style="color:var(--label)">Chia sẻ</b> (□↑) ở thanh dưới<br>5️⃣ Chọn <b style="color:var(--label)">"Thêm vào màn hình chính"</b><br>6️⃣ Mở app từ màn hình chính → nhấn 🔕`
+    : `1️⃣ Nhấn nút <b style="color:var(--label)">Chia sẻ</b> (□↑) ở thanh dưới Safari<br>2️⃣ Chọn <b style="color:var(--label)">"Thêm vào màn hình chính"</b><br>3️⃣ Mở app từ màn hình chính<br>4️⃣ Nhấn 🔕 để bật thông báo`;
+  document.getElementById("notifSteps").innerHTML = steps;
+  openModal("notifGuideModal");
+}
+
 async function toggleNotif() {
   const btn = document.getElementById("notifBtn");
   const on = localStorage.getItem(NOTIF_ON_KEY) === "1";
@@ -695,7 +717,7 @@ async function toggleNotif() {
     showToast("Đã tắt thông báo hàng ngày");
     return;
   }
-  if (!('Notification' in window)) { showToast("Trình duyệt không hỗ trợ thông báo","err"); return; }
+  if (!('Notification' in window)) { showNotifGuide(); return; }
   const perm = await Notification.requestPermission();
   if (perm !== "granted") { showToast("Cần cấp quyền thông báo trong Settings","err"); return; }
   localStorage.setItem(NOTIF_ON_KEY, "1");
