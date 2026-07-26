@@ -417,6 +417,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+      <button class="theme-btn" id="notifBtn" onclick="toggleNotif()" title="Thông báo hàng ngày">🔕</button>
       <div class="month-chip" id="monthBadge">—</div>
     </div>
   </div>
@@ -673,6 +674,66 @@ function toggleTheme() {
   if (btn) btn.textContent = saved === "light" ? "🌙" : "☀️";
 })();
 
+// ══ NOTIFICATIONS ══
+const NOTIF_DATE_KEY = "tw_notif_date";
+const NOTIF_ON_KEY   = "tw_notif_on";
+
+(async function initSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try { await navigator.serviceWorker.register('./sw.js'); } catch(e) {}
+  const on = localStorage.getItem(NOTIF_ON_KEY) === "1";
+  const btn = document.getElementById("notifBtn");
+  if (btn) btn.textContent = on ? "🔔" : "🔕";
+})();
+
+async function toggleNotif() {
+  const btn = document.getElementById("notifBtn");
+  const on = localStorage.getItem(NOTIF_ON_KEY) === "1";
+  if (on) {
+    localStorage.setItem(NOTIF_ON_KEY, "0");
+    if (btn) btn.textContent = "🔕";
+    showToast("Đã tắt thông báo hàng ngày");
+    return;
+  }
+  if (!('Notification' in window)) { showToast("Trình duyệt không hỗ trợ thông báo","err"); return; }
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") { showToast("Cần cấp quyền thông báo trong Settings","err"); return; }
+  localStorage.setItem(NOTIF_ON_KEY, "1");
+  if (btn) btn.textContent = "🔔";
+  showToast("Thông báo hàng ngày đã bật ✓");
+  fireNotif(true);
+}
+
+async function fireNotif(force) {
+  if (localStorage.getItem(NOTIF_ON_KEY) !== "1") return;
+  if (!('Notification' in window) || Notification.permission !== "granted") return;
+  const today = new Date().toISOString().slice(0,10);
+  if (!force && localStorage.getItem(NOTIF_DATE_KEY) === today) return;
+  if (!DATA) return;
+
+  const cats = DATA.budgetCats || {};
+  const sp = monthSpend();
+  const totalBudget = Object.values(cats).reduce((s,c)=>s+c.limit,0);
+  const tSpent = Object.keys(cats).reduce((s,k)=>s+(sp[k]||0),0);
+  const tRemain = totalBudget - tSpent;
+  const now = new Date();
+  const daysLeft = new Date(now.getFullYear(),now.getMonth()+1,0).getDate() - now.getDate() + 1;
+  const daily = daysLeft > 0 ? tRemain / daysLeft : 0;
+
+  const title = daily >= 0 ? "💰 Tom's Wallet" : "⚠️ Tom's Wallet";
+  const body  = daily >= 0
+    ? `Hôm nay có thể chi: $${daily.toFixed(2)}\nCòn lại tháng: $${tRemain.toFixed(2)} · ${daysLeft} ngày còn lại`
+    : `Đã vượt budget tháng này!\nVượt: $${Math.abs(tRemain).toFixed(2)} · Hạn chế chi tiêu`;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(title, {body, tag:'daily-budget', renotify:false});
+  } catch(e) {
+    try { new Notification(title, {body}); } catch(_) {}
+  }
+  localStorage.setItem(NOTIF_DATE_KEY, today);
+}
+
 // ══ STATE ══
 let DATA = null, synced = false;
 let curLogType = "expense", curCat = null, curGoalKey = null, curDebtKey = null, pendingTxn = null;
@@ -744,6 +805,7 @@ window._onRemoteData = d => {
   document.getElementById("syncLabel").style.color = "var(--green)";
   if (!historyMonth) historyMonth = mk();
   render();
+  fireNotif();
 };
 setTimeout(()=>{
   if (!synced) {
@@ -755,6 +817,7 @@ setTimeout(()=>{
     document.getElementById("syncLabel").style.color = "var(--orange)";
     if (!historyMonth) historyMonth = mk();
     render();
+    fireNotif();
   }
 },3500);
 function saveData() { if(window._saveDB) window._saveDB(DATA); }
@@ -806,6 +869,9 @@ function renderBudget() {
   const tRemain=totalBudget-tSpent;
   const isOver=tRemain<0;
   const tPct=totalBudget>0?Math.min((tSpent/totalBudget)*100,100):0;
+  const now2=new Date(), dim=new Date(now2.getFullYear(),now2.getMonth()+1,0).getDate();
+  const daysLeft=dim-now2.getDate()+1;
+  const daily=daysLeft>0?tRemain/daysLeft:0;
   const summary=Object.keys(cats).length?`<div style="background:var(--bg2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:15px;font-weight:600">Tổng ngân sách tháng</div>
@@ -817,6 +883,10 @@ function renderBudget() {
     <div style="display:flex;justify-content:space-between;font-size:12px">
       <span style="color:var(--label2)">Đã chi <b style="color:${isOver?"var(--red)":"var(--label)"}">${fmt(tSpent)}</b></span>
       <span style="color:${isOver?"var(--red)":"var(--green)"}">${isOver?"Vượt "+fmt(-tRemain):"Còn "+fmt(tRemain)}</span>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--label2)">📅 Có thể chi hôm nay</div>
+      <div style="font-size:16px;font-weight:700;color:${daily>=0?"var(--green)":"var(--red)"}">${daily>=0?"":"−"}${fmt(Math.abs(daily))}<span style="font-size:10px;font-weight:400;color:var(--label2)">/ngày</span></div>
     </div>
   </div>`:"";
 
