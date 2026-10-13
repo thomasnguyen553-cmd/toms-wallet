@@ -558,6 +558,43 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   <div id="assetTotal"></div>
 </div>
 
+<!-- AI TAB -->
+<div class="content hidden" id="tab-ai">
+  <div class="content-header">
+    <div class="content-title">Claude <span style="color:var(--purple)">AI</span></div>
+    <button class="btn-add" style="background:var(--purple);color:#fff" onclick="analyzeAll()">✦ Tất cả</button>
+  </div>
+
+  <!-- API Key setup -->
+  <div id="aiKeySection">
+    <div style="background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.25);border-radius:13px;padding:13px 14px;margin-bottom:14px;font-size:13px;color:#d8a5f7;line-height:1.7">
+      💡 Cần API key từ <b style="color:#e0b8ff">console.anthropic.com</b><br>Key lưu trên thiết bị, không gửi đi đâu khác.
+    </div>
+    <div class="field-label">Anthropic API Key</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input class="inp" id="aiKeyInput" type="password" placeholder="sk-ant-api03-…" style="margin-bottom:0;flex:1">
+      <button class="btn-add" style="background:var(--purple);color:#fff;white-space:nowrap" onclick="saveApiKey()">Lưu</button>
+    </div>
+  </div>
+  <div id="aiKeyStatus" class="hidden" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--green)">✓ API key đã lưu</div>
+    <button class="row-btn" style="color:var(--red)" onclick="clearApiKey()">Xóa key</button>
+  </div>
+
+  <!-- Insight cards -->
+  <div id="aiInsights"></div>
+
+  <!-- Ask section -->
+  <div style="margin-top:6px">
+    <div class="field-label">Hỏi về tài chính của bạn</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input class="inp" id="aiQuestion" placeholder="vd: Tháng này tôi nên cắt giảm gì?" style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter')askClaude()">
+      <button class="btn-add" style="background:var(--purple);color:#fff" onclick="askClaude()">Hỏi</button>
+    </div>
+    <div id="aiAnswer" class="hidden" style="background:var(--bg2);border-radius:14px;padding:14px;font-size:14px;line-height:1.8;white-space:pre-wrap"></div>
+  </div>
+</div>
+
 <!-- HISTORY TAB -->
 <div class="content hidden" id="tab-history">
   <div class="content-header"><div class="content-title">Lịch sử</div></div>
@@ -575,6 +612,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   <button class="tab-item" onclick="showTab('debt',this)"><div class="tab-icon">💳</div><div class="tab-label">Nợ</div></button>
   <button class="tab-item" onclick="showTab('assets',this)"><div class="tab-icon">💎</div><div class="tab-label">Tài sản</div></button>
   <button class="tab-item" onclick="showTab('history',this)"><div class="tab-icon">📋</div><div class="tab-label">Lịch sử</div></button>
+  <button class="tab-item" onclick="showTab('ai',this)"><div class="tab-icon">✨</div><div class="tab-label">AI</div></button>
 </div>
 
 <script>
@@ -1214,12 +1252,13 @@ function rolloverBalance(amt) {
 
 // ══ TABS ══
 function showTab(name,btn) {
-  ["budget","log","savings","debt","assets","history"].forEach(t=>{
+  ["budget","log","savings","debt","assets","history","ai"].forEach(t=>{
     document.getElementById("tab-"+t).classList.toggle("hidden",t!==name);
   });
   document.querySelectorAll(".tab-item").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   if (name==="log"){document.getElementById("lDate").value=today();buildCatPicker();}
+  if (name==="ai") renderAiTab();
 }
 function setHistoryMonth(m){historyMonth=m;renderHistory();}
 function setCatFilter(c){historyCat=c;renderHistory();}
@@ -1502,6 +1541,155 @@ function showToast(msg,type="ok"){
 }
 
 document.getElementById("lDate").value=today();
+
+// ══ CLAUDE AI ══
+const AI_KEY_STORE = "tw_ai_key";
+let aiKey = localStorage.getItem(AI_KEY_STORE) || "";
+
+const AI_INSIGHTS = [
+  {id:"summary",  icon:"📊", title:"Tổng kết tháng",     prompt:"Tóm tắt tài chính tháng này trong 3-4 câu ngắn. Nhận xét về thu nhập, chi tiêu, số dư và xu hướng. Trả lời bằng tiếng Việt."},
+  {id:"budget",   icon:"💸", title:"Phân tích ngân sách", prompt:"Phân tích hiệu quả ngân sách. Danh mục nào chi nhiều hoặc vượt hạn? Đề xuất 2-3 hành động cụ thể bằng tiếng Việt."},
+  {id:"savings",  icon:"💰", title:"Gợi ý tiết kiệm",    prompt:"Dựa trên chi tiêu hiện tại, đề xuất 3 cách cụ thể và thực tế để tiết kiệm thêm mỗi tháng. Bằng tiếng Việt."},
+  {id:"risk",     icon:"⚠️", title:"Cảnh báo rủi ro",    prompt:"Xác định 2-3 rủi ro tài chính hoặc mẫu chi tiêu đáng lo ngại. Thẳng thắn, ngắn gọn bằng tiếng Việt."},
+];
+
+function renderAiTab() {
+  const hasKey = !!aiKey;
+  const ks = document.getElementById("aiKeySection");
+  const kst = document.getElementById("aiKeyStatus");
+  if (ks) ks.classList.toggle("hidden", hasKey);
+  if (kst) kst.classList.toggle("hidden", !hasKey);
+  renderAiInsights();
+}
+
+function renderAiInsights() {
+  const el = document.getElementById("aiInsights");
+  if (!el) return;
+  el.innerHTML = AI_INSIGHTS.map(ins=>`
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:600">${ins.icon} ${ins.title}</div>
+        <button class="row-btn" style="color:var(--purple)" onclick="fetchInsight('${ins.id}')">↻ Phân tích</button>
+      </div>
+      <div id="ai-${ins.id}" style="font-size:13px;color:var(--label2);line-height:1.75;min-height:36px;white-space:pre-wrap">Nhấn "Phân tích" để xem nhận xét từ Claude</div>
+    </div>`).join("");
+}
+
+function buildWalletContext() {
+  if (!DATA) return "";
+  const m=mk(), sp=monthSpend(), cats=DATA.budgetCats||{}, txns=DATA.txns||[];
+  const income  = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
+  let ctx = `=== Dữ liệu ví Tom (AUD) · ${fmtMonthLabel(m)} ===\n`;
+  ctx += `Thu nhập: $${income.toFixed(2)}  Chi: $${expense.toFixed(2)}  Số dư: $${(income-expense).toFixed(2)}\n\n`;
+  ctx += "Ngân sách danh mục:\n";
+  Object.entries(cats).forEach(([k,c])=>{
+    const s=sp[k]||0, pct=c.limit>0?Math.round(s/c.limit*100):0;
+    ctx += `  ${c.name}: $${s.toFixed(2)}/$${c.limit.toFixed(2)} (${pct}%)${s>c.limit?" VƯỢT":""}\n`;
+  });
+  ctx += "\nGiao dịch gần nhất:\n";
+  txns.filter(t=>t.monthKey===m).slice(-20).reverse().forEach(t=>{
+    ctx += `  ${t.date} ${t.type==="income"?"+":"-"}$${t.amount} ${t.note||t.cat||""}\n`;
+  });
+  ctx += "\nMục tiêu tiết kiệm:\n";
+  Object.values(DATA.goals||{}).forEach(g=>{
+    ctx += `  ${g.name}: $${(g.saved||0).toFixed(2)}/$${g.target.toFixed(2)} (${Math.round((g.saved||0)/g.target*100)}%)\n`;
+  });
+  ctx += "\nKhoản nợ:\n";
+  Object.values(DATA.debts||{}).forEach(d=>{
+    ctx += `  ${d.name}: còn $${(d.remaining??d.total).toFixed(2)}\n`;
+  });
+  return ctx;
+}
+
+async function callClaude(prompt, elId) {
+  if (!aiKey) { showToast("Nhập API key trước","err"); return; }
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.style.color = "var(--label2)";
+  el.textContent = "Claude đang phân tích…";
+  const body = {
+    model: "claude-haiku-4-5",
+    max_tokens: 600,
+    stream: true,
+    messages: [{role:"user", content: buildWalletContext()+"\n\n"+prompt}]
+  };
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key": aiKey,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-calls":"true"
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      el.style.color = "var(--red)";
+      el.textContent = err.error?.message || `Lỗi ${res.status} — kiểm tra API key`;
+      return;
+    }
+    el.style.color = "var(--label)";
+    el.textContent = "";
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream:true});
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (raw === "[DONE]") continue;
+        try {
+          const ev = JSON.parse(raw);
+          if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") {
+            el.textContent += ev.delta.text;
+          }
+        } catch(_){}
+      }
+    }
+  } catch(e) {
+    el.style.color = "var(--red)";
+    el.textContent = "Lỗi kết nối: " + e.message;
+  }
+}
+
+async function fetchInsight(id) {
+  const ins = AI_INSIGHTS.find(i=>i.id===id);
+  if (ins) await callClaude(ins.prompt, "ai-"+id);
+}
+async function analyzeAll() {
+  if (!aiKey) { showToast("Nhập API key trước","err"); return; }
+  renderAiInsights();
+  for (const ins of AI_INSIGHTS) await fetchInsight(ins.id);
+}
+async function askClaude() {
+  const q = document.getElementById("aiQuestion").value.trim();
+  if (!q) return;
+  await callClaude("Câu hỏi của tôi: " + q + "\n\nTrả lời ngắn gọn, thực tế, bằng tiếng Việt.", "aiAnswer");
+}
+function saveApiKey() {
+  const k = document.getElementById("aiKeyInput").value.trim();
+  if (!k.startsWith("sk-")) { showToast("Key không hợp lệ (phải bắt đầu bằng sk-)","err"); return; }
+  aiKey = k;
+  localStorage.setItem(AI_KEY_STORE, k);
+  document.getElementById("aiKeyInput").value = "";
+  renderAiTab();
+  showToast("API key đã lưu ✓");
+}
+function clearApiKey() {
+  aiKey = "";
+  localStorage.removeItem(AI_KEY_STORE);
+  renderAiTab();
+  showToast("Đã xóa API key");
+}
 </script>
 </body>
 </html>
