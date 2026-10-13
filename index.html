@@ -561,40 +561,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 <!-- AI TAB -->
 <div class="content hidden" id="tab-ai">
   <div class="content-header">
-    <div class="content-title">Gemini <span style="color:var(--purple)">AI</span></div>
-    <button class="btn-add" style="background:var(--purple);color:#fff" onclick="analyzeAll()">✦ Tất cả</button>
+    <div class="content-title">📊 <span style="color:var(--purple)">Phân tích</span></div>
+    <button class="btn-add" style="background:var(--purple);color:#fff" onclick="renderAiTab()">↻</button>
   </div>
-
-  <!-- API Key setup -->
-  <div id="aiKeySection">
-    <div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.25);border-radius:13px;padding:13px 14px;margin-bottom:14px;font-size:13px;color:#7de8a0;line-height:1.8">
-      ✅ <b style="color:#a5f3c0">Hoàn toàn miễn phí!</b><br>
-      Lấy key tại <b style="color:#a5f3c0">aistudio.google.com</b><br>
-      Đăng nhập Google → "Get API key" → "Create API key"
-    </div>
-    <div class="field-label">Google AI Studio API Key (miễn phí)</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input class="inp" id="aiKeyInput" type="password" placeholder="AIzaSy…" style="margin-bottom:0;flex:1">
-      <button class="btn-add" style="background:var(--green);color:#fff;white-space:nowrap" onclick="saveApiKey()">Lưu</button>
-    </div>
-  </div>
-  <div id="aiKeyStatus" class="hidden" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-size:12px;color:var(--green)">✓ Google AI key đã lưu (miễn phí)</div>
-    <button class="row-btn" style="color:var(--red)" onclick="clearApiKey()">Xóa key</button>
-  </div>
-
-  <!-- Insight cards -->
-  <div id="aiInsights"></div>
-
-  <!-- Ask section -->
-  <div style="margin-top:6px">
-    <div class="field-label">Hỏi về tài chính của bạn</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <input class="inp" id="aiQuestion" placeholder="vd: Tháng này tôi nên cắt giảm gì?" style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter')askClaude()">
-      <button class="btn-add" style="background:var(--purple);color:#fff" onclick="askClaude()">Hỏi</button>
-    </div>
-    <div id="aiAnswer" class="hidden" style="background:var(--bg2);border-radius:14px;padding:14px;font-size:14px;line-height:1.8;white-space:pre-wrap"></div>
-  </div>
+  <div id="aiDashboard"></div>
 </div>
 
 <!-- HISTORY TAB -->
@@ -614,7 +584,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   <button class="tab-item" onclick="showTab('debt',this)"><div class="tab-icon">💳</div><div class="tab-label">Nợ</div></button>
   <button class="tab-item" onclick="showTab('assets',this)"><div class="tab-icon">💎</div><div class="tab-label">Tài sản</div></button>
   <button class="tab-item" onclick="showTab('history',this)"><div class="tab-icon">📋</div><div class="tab-label">Lịch sử</div></button>
-  <button class="tab-item" onclick="showTab('ai',this)"><div class="tab-icon">✨</div><div class="tab-label">AI</div></button>
+  <button class="tab-item" onclick="showTab('ai',this)"><div class="tab-icon">📊</div><div class="tab-label">Phân tích</div></button>
 </div>
 
 <script>
@@ -1544,144 +1514,180 @@ function showToast(msg,type="ok"){
 
 document.getElementById("lDate").value=today();
 
-// ══ CLAUDE AI ══
-const AI_KEY_STORE = "tw_ai_key";
-let aiKey = localStorage.getItem(AI_KEY_STORE) || "";
+// ══ LOCAL ANALYTICS DASHBOARD ══
 
-const AI_INSIGHTS = [
-  {id:"summary",  icon:"📊", title:"Tổng kết tháng",     prompt:"Tóm tắt tài chính tháng này trong 3-4 câu ngắn. Nhận xét về thu nhập, chi tiêu, số dư và xu hướng. Trả lời bằng tiếng Việt."},
-  {id:"budget",   icon:"💸", title:"Phân tích ngân sách", prompt:"Phân tích hiệu quả ngân sách. Danh mục nào chi nhiều hoặc vượt hạn? Đề xuất 2-3 hành động cụ thể bằng tiếng Việt."},
-  {id:"savings",  icon:"💰", title:"Gợi ý tiết kiệm",    prompt:"Dựa trên chi tiêu hiện tại, đề xuất 3 cách cụ thể và thực tế để tiết kiệm thêm mỗi tháng. Bằng tiếng Việt."},
-  {id:"risk",     icon:"⚠️", title:"Cảnh báo rủi ro",    prompt:"Xác định 2-3 rủi ro tài chính hoặc mẫu chi tiêu đáng lo ngại. Thẳng thắn, ngắn gọn bằng tiếng Việt."},
-];
+function statTile(label, val, color, signed) {
+  const display = signed ? (val>=0?"+":"-")+fmt(val) : fmt(val);
+  return `<div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
+    <div style="font-size:10px;color:var(--label2);margin-bottom:2px">${label}</div>
+    <div style="font-size:14px;font-weight:700;color:${color}">${display}</div>
+  </div>`;
+}
 
 function renderAiTab() {
-  const hasKey = !!aiKey;
-  const ks = document.getElementById("aiKeySection");
-  const kst = document.getElementById("aiKeyStatus");
-  if (ks) ks.classList.toggle("hidden", hasKey);
-  if (kst) kst.classList.toggle("hidden", !hasKey);
-  renderAiInsights();
-}
-
-function renderAiInsights() {
-  const el = document.getElementById("aiInsights");
+  const el = document.getElementById("aiDashboard");
   if (!el) return;
-  el.innerHTML = AI_INSIGHTS.map(ins=>`
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:15px;font-weight:600">${ins.icon} ${ins.title}</div>
-        <button class="row-btn" style="color:var(--purple)" onclick="fetchInsight('${ins.id}')">↻ Phân tích</button>
-      </div>
-      <div id="ai-${ins.id}" style="font-size:13px;color:var(--label2);line-height:1.75;min-height:36px;white-space:pre-wrap">Nhấn "Phân tích" để xem nhận xét từ Claude</div>
-    </div>`).join("");
-}
+  if (!DATA) { el.innerHTML = '<div style="color:var(--label2);text-align:center;padding:40px 0">Đang tải dữ liệu…</div>'; return; }
 
-function buildWalletContext() {
-  if (!DATA) return "";
-  const m=mk(), sp=monthSpend(), cats=DATA.budgetCats||{}, txns=DATA.txns||[];
-  const income  = txns.filter(t=>t.monthKey===m&&t.type==="income").reduce((s,t)=>s+t.amount,0);
-  const expense = txns.filter(t=>t.monthKey===m&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
-  let ctx = `=== Dữ liệu ví Tom (AUD) · ${fmtMonthLabel(m)} ===\n`;
-  ctx += `Thu nhập: $${income.toFixed(2)}  Chi: $${expense.toFixed(2)}  Số dư: $${(income-expense).toFixed(2)}\n\n`;
-  ctx += "Ngân sách danh mục:\n";
-  Object.entries(cats).forEach(([k,c])=>{
-    const s=sp[k]||0, pct=c.limit>0?Math.round(s/c.limit*100):0;
-    ctx += `  ${c.name}: $${s.toFixed(2)}/$${c.limit.toFixed(2)} (${pct}%)${s>c.limit?" VƯỢT":""}\n`;
-  });
-  ctx += "\nGiao dịch gần nhất:\n";
-  txns.filter(t=>t.monthKey===m).slice(-20).reverse().forEach(t=>{
-    ctx += `  ${t.date} ${t.type==="income"?"+":"-"}$${t.amount} ${t.note||t.cat||""}\n`;
-  });
-  ctx += "\nMục tiêu tiết kiệm:\n";
-  Object.values(DATA.goals||{}).forEach(g=>{
-    ctx += `  ${g.name}: $${(g.saved||0).toFixed(2)}/$${g.target.toFixed(2)} (${Math.round((g.saved||0)/g.target*100)}%)\n`;
-  });
-  ctx += "\nKhoản nợ:\n";
-  Object.values(DATA.debts||{}).forEach(d=>{
-    ctx += `  ${d.name}: còn $${(d.remaining??d.total).toFixed(2)}\n`;
-  });
-  return ctx;
-}
+  const m = mk();
+  const txns = DATA.txns || [];
+  const cats = DATA.budgetCats || {};
+  const goals = DATA.goals || {};
+  const debts = DATA.debts || {};
+  const assets = DATA.assets || {};
 
-async function callClaude(prompt, elId) {
-  if (!aiKey) { showToast("Nhập API key trước","err"); return; }
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.classList.remove("hidden");
-  el.style.color = "var(--label2)";
-  el.textContent = "Gemini đang phân tích…";
-  const body = {
-    contents: [{parts:[{text: buildWalletContext()+"\n\n"+prompt}]}],
-    generationConfig: {maxOutputTokens: 600}
-  };
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${encodeURIComponent(aiKey)}`,
-      {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)}
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      el.style.color = "var(--red)";
-      el.textContent = err.error?.message || `Lỗi ${res.status} — kiểm tra API key`;
-      return;
-    }
-    el.style.color = "var(--label)";
-    el.textContent = "";
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, {stream:true});
-      const lines = buf.split("\n");
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const raw = line.slice(6).trim();
-        if (!raw || raw === "[DONE]") continue;
-        try {
-          const ev = JSON.parse(raw);
-          const text = ev.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) el.textContent += text;
-        } catch(_){}
-      }
-    }
-  } catch(e) {
-    el.style.color = "var(--red)";
-    el.textContent = "Lỗi kết nối: " + e.message;
+  const mTxns = txns.filter(t => t.monthKey === m);
+  const income = mTxns.filter(t => t.type === "income").reduce((s,t) => s+t.amount, 0);
+  const expense = mTxns.filter(t => t.type === "expense" || t.type === "saving" || t.type === "debt_payment").reduce((s,t) => s+t.amount, 0);
+  const expenseOnly = mTxns.filter(t => t.type === "expense").reduce((s,t) => s+t.amount, 0);
+  const bal = income - expense;
+  const savingsRate = income > 0 ? (bal / income * 100) : 0;
+
+  const d0 = new Date(); d0.setMonth(d0.getMonth()-1);
+  const prevM = `${d0.getFullYear()}-${String(d0.getMonth()+1).padStart(2,"0")}`;
+  const prevTxns = txns.filter(t => t.monthKey === prevM);
+  const prevExpense = prevTxns.filter(t => t.type === "expense" || t.type === "saving" || t.type === "debt_payment").reduce((s,t) => s+t.amount, 0);
+
+  const sp = monthSpend();
+  const totalBudget = Object.values(cats).reduce((s,c) => s+c.limit, 0);
+  const now = new Date();
+  const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const daysLeft = dim - now.getDate() + 1;
+  const tRemain = totalBudget - expenseOnly;
+  const dailyAvail = daysLeft > 0 ? tRemain / daysLeft : 0;
+
+  const catsBySpend = Object.entries(cats)
+    .map(([k,c]) => ({k, name:c.name, icon:c.icon||"💸", spent:sp[k]||0, limit:c.limit}))
+    .sort((a,b) => b.spent - a.spent);
+
+  const totalDebt = Object.values(debts).reduce((s,d) => s+(d.remaining??d.total), 0);
+  const totalAssets = Object.values(assets).reduce((s,a) => s+a.value, 0);
+  const totalGoalSaved = Object.values(goals).reduce((s,g) => s+(g.saved||0), 0);
+  const netWorth = totalGoalSaved + totalAssets - totalDebt;
+
+  // Smart insights
+  const insights = [];
+  if (bal > 0) insights.push({icon:"✅", color:"var(--green)", text:`Số dư tháng dương: +${fmt(bal)}`});
+  else if (bal < 0) insights.push({icon:"🔴", color:"var(--red)", text:`Chi vượt thu: ${fmt(Math.abs(bal))}`});
+
+  if (income > 0 && savingsRate >= 10) insights.push({icon:"💰", color:"var(--green)", text:`Tỉ lệ tiết kiệm tốt: ${savingsRate.toFixed(1)}%`});
+  else if (income > 0 && savingsRate < 0) insights.push({icon:"⚠️", color:"var(--red)", text:`Chi nhiều hơn thu: âm ${Math.abs(savingsRate).toFixed(1)}%`});
+
+  Object.entries(cats).forEach(([k,c]) => {
+    const s = sp[k]||0;
+    if (s > c.limit) insights.push({icon:"⚠️", color:"var(--red)", text:`${c.icon||""} ${c.name} vượt ${fmt(s-c.limit)} (${Math.round(s/c.limit*100)}%)`});
+    else if (c.limit > 0 && s/c.limit > 0.85) insights.push({icon:"⚡", color:"var(--orange)", text:`${c.icon||""} ${c.name} gần hết ngân sách (${Math.round(s/c.limit*100)}%)`});
+  });
+
+  if (prevExpense > 0) {
+    const chg = (expense - prevExpense) / prevExpense * 100;
+    if (chg > 15) insights.push({icon:"📈", color:"var(--red)", text:`Chi tiêu tăng ${chg.toFixed(0)}% so tháng trước`});
+    else if (chg < -10) insights.push({icon:"📉", color:"var(--green)", text:`Chi tiêu giảm ${Math.abs(chg).toFixed(0)}% so tháng trước 👏`});
   }
-}
 
-async function fetchInsight(id) {
-  const ins = AI_INSIGHTS.find(i=>i.id===id);
-  if (ins) await callClaude(ins.prompt, "ai-"+id);
-}
-async function analyzeAll() {
-  if (!aiKey) { showToast("Nhập API key trước","err"); return; }
-  renderAiInsights();
-  for (const ins of AI_INSIGHTS) await fetchInsight(ins.id);
-}
-async function askClaude() {
-  const q = document.getElementById("aiQuestion").value.trim();
-  if (!q) return;
-  await callClaude("Câu hỏi của tôi: " + q + "\n\nTrả lời ngắn gọn, thực tế, bằng tiếng Việt.", "aiAnswer");
-}
-function saveApiKey() {
-  const k = document.getElementById("aiKeyInput").value.trim();
-  if (!k) { showToast("Vui lòng nhập API key","err"); return; }
-  aiKey = k;
-  localStorage.setItem(AI_KEY_STORE, k);
-  document.getElementById("aiKeyInput").value = "";
-  renderAiTab();
-  showToast("API key đã lưu ✓");
-}
-function clearApiKey() {
-  aiKey = "";
-  localStorage.removeItem(AI_KEY_STORE);
-  renderAiTab();
-  showToast("Đã xóa API key");
+  if (daysLeft > 0 && totalBudget > 0) {
+    if (dailyAvail > 0) insights.push({icon:"💡", color:"var(--blue)", text:`${daysLeft} ngày còn lại — tối đa ${fmt(dailyAvail)}/ngày`});
+    else insights.push({icon:"🚫", color:"var(--red)", text:`Đã vượt ngân sách tháng! Vượt ${fmt(Math.abs(tRemain))}`});
+  }
+
+  Object.values(goals).forEach(g => {
+    const pct = g.target > 0 ? (g.saved||0)/g.target*100 : 0;
+    if (pct >= 100) insights.push({icon:"🏆", color:"var(--green)", text:`${g.icon||"🎯"} ${g.name}: đã hoàn thành!`});
+    else if (pct >= 80) insights.push({icon:"🎯", color:"var(--purple)", text:`${g.icon||"🎯"} ${g.name}: ${pct.toFixed(0)}% — sắp đến đích!`});
+  });
+
+  if (catsBySpend.length > 0 && catsBySpend[0].spent > 0)
+    insights.push({icon:"📊", color:"var(--label2)", text:`Chi nhiều nhất: ${catsBySpend[0].icon} ${catsBySpend[0].name} — ${fmt(catsBySpend[0].spent)}`});
+
+  if (totalAssets > 0 || totalDebt > 0)
+    insights.push({icon:"💎", color:netWorth>=0?"var(--green)":"var(--red)", text:`Tài sản ròng: ${netWorth>=0?"+":""}${netWorth>=0?fmt(netWorth):"-"+fmt(Math.abs(netWorth))}`});
+
+  if (insights.length === 0)
+    insights.push({icon:"📝", color:"var(--label2)", text:"Ghi thêm giao dịch để xem phân tích"});
+
+  const topExpenses = mTxns.filter(t => t.type === "expense").sort((a,b) => b.amount-a.amount).slice(0,5);
+
+  el.innerHTML = `
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;color:var(--label2);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase">${fmtMonthLabel(m)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px">
+        ${statTile("Thu nhập", income, "var(--green)")}
+        ${statTile("Chi tiêu", expense, "var(--red)")}
+        ${statTile("Số dư", Math.abs(bal), bal>=0?"var(--green)":"var(--red)")}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
+          <div style="font-size:10px;color:var(--label2);margin-bottom:2px">Tiết kiệm</div>
+          <div style="font-size:14px;font-weight:700;color:${savingsRate>=10?"var(--green)":savingsRate<0?"var(--red)":"var(--label)"}">${income>0?savingsRate.toFixed(1)+"%":"—"}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
+          <div style="font-size:10px;color:var(--label2);margin-bottom:2px">Chi/ngày khả dụng</div>
+          <div style="font-size:14px;font-weight:700;color:${dailyAvail>=0?"var(--blue)":"var(--red)"}">${totalBudget>0?(dailyAvail>=0?fmt(dailyAvail):"Vượt"):"—"}</div>
+        </div>
+      </div>
+    </div>
+
+    ${catsBySpend.length > 0 ? `
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">💸 Ngân sách tháng</div>
+      ${catsBySpend.map(c => {
+        const pct = c.limit > 0 ? Math.min(c.spent/c.limit*100, 100) : 0;
+        const over = c.limit > 0 && c.spent > c.limit;
+        const near = !over && c.limit > 0 && c.spent/c.limit > 0.8;
+        const barColor = over ? "var(--red)" : near ? "var(--orange)" : "var(--green)";
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px">${c.icon} ${c.name}</span>
+            <span style="font-size:12px;color:${over?"var(--red)":"var(--label2)"}">${fmt(c.spent)} / ${fmt(c.limit)}${over?` <b>+${fmt(c.spent-c.limit)}</b>`:""}</span>
+          </div>
+          <div style="height:5px;background:rgba(120,120,128,.2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s"></div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>` : ""}
+
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">✦ Nhận xét thông minh</div>
+      ${insights.map(i => `
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px;font-size:13px;line-height:1.5">
+          <span style="flex-shrink:0;width:18px">${i.icon}</span>
+          <span style="color:${i.color}">${i.text}</span>
+        </div>`).join("")}
+    </div>
+
+    ${Object.keys(goals).length > 0 || totalDebt > 0 ? `
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">🎯 Mục tiêu & Nợ</div>
+      ${Object.values(goals).map(g => {
+        const pct = g.target > 0 ? Math.min((g.saved||0)/g.target*100, 100) : 0;
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px">${g.icon||"🎯"} ${g.name}</span>
+            <span style="font-size:12px;color:var(--label2)">${fmt(g.saved||0)} / ${fmt(g.target)}</span>
+          </div>
+          <div style="height:5px;background:rgba(120,120,128,.2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--purple);border-radius:3px"></div>
+          </div>
+        </div>`;
+      }).join("")}
+      ${totalDebt > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;padding-top:8px;border-top:1px solid var(--sep)">
+        <span>💳 Tổng nợ còn lại</span>
+        <span style="color:var(--red);font-weight:600">${fmt(totalDebt)}</span>
+      </div>` : ""}
+    </div>` : ""}
+
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">🧾 Giao dịch lớn nhất tháng</div>
+      ${topExpenses.length ? topExpenses.map(t => {
+        const c = cats[t.cat];
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(84,84,88,.2);font-size:13px">
+          <span>${c?.icon||"💸"} ${t.note||c?.name||t.cat}</span>
+          <span style="color:var(--red);font-weight:600">-${fmt(t.amount)}</span>
+        </div>`;
+      }).join("") : '<div style="color:var(--label2);font-size:13px">Chưa có giao dịch tháng này</div>'}
+    </div>
+  `;
 }
 </script>
 </body>
