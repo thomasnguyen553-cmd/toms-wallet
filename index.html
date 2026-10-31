@@ -589,6 +589,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
     <button class="btn btn-ghost" onclick="copyShortcutLink()">📋 Copy link cho Phím tắt Apple Pay</button>
     <div class="field-label">Khác</div>
     <div style="background:var(--bg3);border-radius:13px;padding:4px 14px;margin-bottom:14px">
+      <div class="set-row"><span>🔒 Khóa Face ID (trình duyệt này)</span><button class="theme-btn" id="lockToggleBtn" style="font-size:13px;font-weight:600;padding:6px 12px" onclick="toggleLock()">Bật</button></div>
       <div class="set-row"><span>Thông báo khi mở app</span><button class="theme-btn" id="notifBtn" onclick="toggleNotif()">🔕</button></div>
       <div class="set-row"><span>Giao diện sáng / tối</span><button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button></div>
       <div class="set-row"><span>Đồng bộ</span><span class="sync-text" id="syncLabel">ĐANG TẢI…</span></div>
@@ -755,7 +756,20 @@ async function authenticate() {
   }
 }
 
+const LOCK_OFF_KEY = "tw_lock_off";
+function toggleLock() {
+  const off = localStorage.getItem(LOCK_OFF_KEY) === "1";
+  localStorage.setItem(LOCK_OFF_KEY, off ? "0" : "1");
+  renderLockBtn();
+  showToast(off ? "Đã bật khóa Face ID ✓" : "Đã tắt khóa Face ID trên trình duyệt này");
+}
+function renderLockBtn() {
+  const b = document.getElementById("lockToggleBtn");
+  if (b) b.textContent = localStorage.getItem(LOCK_OFF_KEY) === "1" ? "Tắt" : "Bật";
+}
+
 (function initLock() {
+  if (localStorage.getItem(LOCK_OFF_KEY) === "1") { document.getElementById("lockScreen").style.display = "none"; return; }
   if (!supportsWebAuthn()) { unlockApp(); return; }
   const credId = localStorage.getItem(CRED_KEY);
   const btn = document.getElementById("lockPrimaryBtn");
@@ -1638,6 +1652,7 @@ function openSettings() {
   if (saved.daily) document.getElementById("remDailyTime").value = saved.daily;
   if (saved.day) document.getElementById("remWeekDay").value = saved.day;
   if (saved.week) document.getElementById("remWeekTime").value = saved.week;
+  renderLockBtn();
   openModal("settingsModal");
 }
 
