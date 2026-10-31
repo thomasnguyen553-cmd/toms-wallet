@@ -585,6 +585,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
     <div style="font-size:12px;color:var(--label2);line-height:1.6;margin:-2px 2px 16px">
       Lịch iPhone sẽ báo thông báo đúng giờ kể cả khi app đang đóng. Nhấn vào thông báo → mở link Tom's Wallet.
     </div>
+    <div class="field-label">Apple Pay tự động</div>
+    <button class="btn btn-ghost" onclick="copyShortcutLink()">📋 Copy link cho Phím tắt Apple Pay</button>
     <div class="field-label">Khác</div>
     <div style="background:var(--bg3);border-radius:13px;padding:4px 14px;margin-bottom:14px">
       <div class="set-row"><span>Thông báo khi mở app</span><button class="theme-btn" id="notifBtn" onclick="toggleNotif()">🔕</button></div>
@@ -918,8 +920,38 @@ window._onRemoteData = d => {
   if (!historyMonth) historyMonth = mk();
   render();
   fireNotif();
-  if (!window._promptsChecked) { window._promptsChecked = true; setTimeout(maybeShowPrompts, 800); }
+  if (!window._promptsChecked) { window._promptsChecked = true; if (!handleDeepLink()) setTimeout(maybeShowPrompts, 800); }
 };
+
+// Apple Pay Shortcut link: ?wallet=ID&add=12.50&note=Woolworths
+function parseAmount(raw) {
+  let s = (raw||"").replace(/[^0-9.,]/g,"");
+  if (/,\d{1,2}$/.test(s) && !/\.\d{1,2}$/.test(s)) s = s.replace(/\./g,"").replace(",",".");
+  else s = s.replace(/,/g,"");
+  return parseFloat(s);
+}
+function handleDeepLink() {
+  const p = new URLSearchParams(location.search);
+  if (!p.has("add")) return false;
+  const amt = parseAmount(p.get("add"));
+  const note = (p.get("note")||"").trim();
+  p.delete("add"); p.delete("note");
+  history.replaceState(null, "", "?"+p.toString());
+  openQuickLog();
+  if (amt > 0) document.getElementById("lAmount").value = amt.toFixed(2);
+  if (note) {
+    document.getElementById("lNote").value = note;
+    const prev = (DATA.txns||[]).filter(t=>t.type==="expense"&&(t.note||"").trim().toLowerCase()===note.toLowerCase()).pop();
+    if (prev && DATA.budgetCats?.[prev.cat]) { curCat = prev.cat; buildCatPicker(); }
+  }
+  updateLogPreview();
+  return true;
+}
+function copyShortcutLink() {
+  const wid = new URLSearchParams(location.search).get("wallet") || "";
+  const link = `${location.origin}${location.pathname}?wallet=${wid}&add=`;
+  navigator.clipboard.writeText(link).then(()=>showToast("Đã copy link Shortcut ✓")).catch(()=>prompt("Copy link này:", link));
+}
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && DATA) { updateClock(); render(); maybeShowPrompts(); }
 });
@@ -934,7 +966,7 @@ setTimeout(()=>{
     if (!historyMonth) historyMonth = mk();
     render();
     fireNotif();
-    setTimeout(maybeShowPrompts, 800);
+    if (!handleDeepLink()) setTimeout(maybeShowPrompts, 800);
   }
 },3500);
 function saveData() { if(window._saveDB) window._saveDB(DATA); }
