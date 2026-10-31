@@ -563,6 +563,16 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   </div>
 </div>
 
+<!-- BATCH IMPORT SHEET -->
+<div class="modal-bg hidden" id="importModal">
+  <div class="modal">
+    <div class="modal-title">📥 Nhập giao dịch</div>
+    <div id="importBody"></div>
+    <button class="btn btn-blue" id="importBtn" onclick="confirmImport()">Nhập</button>
+    <button class="btn btn-ghost" style="margin-bottom:0" onclick="closeModal('importModal')">Hủy</button>
+  </div>
+</div>
+
 <!-- SETTINGS SHEET -->
 <div class="modal-bg hidden" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
   <div class="modal">
@@ -944,11 +954,66 @@ function parseAmount(raw) {
   else s = s.replace(/,/g,"");
   return parseFloat(s);
 }
+const cleanNote = s => String(s||"").replace(/[<>&"'`]/g,"").slice(0,120);
+
+// Batch import link: ?wallet=ID&import=<base64url JSON {id, items:[[type,date,amount,note],...]}>
+let pendingImport = null;
+function handleImportLink() {
+  const p = new URLSearchParams(location.search);
+  if (!p.has("import")) return false;
+  const raw = p.get("import");
+  p.delete("import");
+  history.replaceState(null, "", "?"+p.toString());
+  let pkg;
+  try {
+    const b64 = raw.replace(/-/g,"+").replace(/_/g,"/");
+    pkg = JSON.parse(decodeURIComponent(escape(atob(b64 + "===".slice((b64.length+3)%4)))));
+  } catch(e) { showToast("Link nhập không hợp lệ","err"); return true; }
+  const already = (DATA.imports||{})[pkg.id];
+  const existing = DATA.txns||[];
+  const items = pkg.items
+    .filter(([type,date,amount]) => ["income","expense","saving"].includes(type) && /^\d{4}-\d{2}-\d{2}$/.test(date) && amount > 0)
+    .map(([type,date,amount,note]) => ({type,date,amount:+amount,note:cleanNote(note),
+    dup: existing.some(t=>t.type===type&&t.date===date&&Math.abs(t.amount-amount)<0.005)}));
+  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup)};
+  const label = {income:"💵 Thu", expense:"💸 Chi", saving:"💰 Tiết kiệm"};
+  const total = pendingImport.items.reduce((s,i)=>s+(i.type==="income"?i.amount:-i.amount),0);
+  document.getElementById("importBody").innerHTML =
+    (already ? `<div class="ios-alert ios-alert-yellow">Link này đã được nhập ngày ${fmtDate(already)}. Chỉ những khoản chưa có mới được thêm.</div>` : "") +
+    `<div class="ios-list" style="max-height:46vh;overflow-y:auto">${items.map(i=>`
+      <div class="ios-row" style="opacity:${i.dup?.4:1}">
+        <div class="ios-info"><div class="ios-name" style="font-size:13px">${i.note}</div>
+          <div class="ios-sub">${fmtDate(i.date)} · ${label[i.type]||i.type}${i.dup?" · đã có, bỏ qua":""}</div></div>
+        <div class="ios-amt" style="color:${i.type==="income"?"var(--green)":"var(--red)"}">${i.type==="income"?"+":"-"}${fmt(i.amount)}</div>
+      </div>`).join("")}</div>
+    <div style="display:flex;justify-content:space-between;font-size:14px;margin:-4px 2px 14px"><span style="color:var(--label2)">${pendingImport.items.length} khoản mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
+  const btn = document.getElementById("importBtn");
+  btn.textContent = `Nhập ${pendingImport.items.length} giao dịch`;
+  btn.disabled = !pendingImport.items.length;
+  openModal("importModal");
+  return true;
+}
+function confirmImport() {
+  if (!pendingImport) return;
+  if (!DATA.txns) DATA.txns = [];
+  const base = Date.now();
+  pendingImport.items.forEach((i,n) => DATA.txns.push({
+    id:String(base+n), type:i.type, amount:i.amount, cat:i.type==="income"?"income":(i.cat||"misc"),
+    note:i.note, date:i.date, monthKey:i.date.slice(0,7)}));
+  if (!DATA.imports) DATA.imports = {};
+  DATA.imports[pendingImport.id] = today();
+  saveData(); render();
+  closeModal("importModal");
+  showToast(`Đã nhập ${pendingImport.items.length} giao dịch ✓`);
+  pendingImport = null;
+}
+
 function handleDeepLink() {
+  if (handleImportLink()) return true;
   const p = new URLSearchParams(location.search);
   if (!p.has("add")) return false;
   const amt = parseAmount(p.get("add"));
-  const note = (p.get("note")||"").trim();
+  const note = cleanNote(p.get("note")).trim();
   p.delete("add"); p.delete("note");
   history.replaceState(null, "", "?"+p.toString());
   openQuickLog();
@@ -1508,7 +1573,7 @@ function confirmOver(){closeModal("warnModal");if(pendingTxn){commitTxn(pendingT
 
 function commitTxn(t) {
   if (!DATA.txns) DATA.txns=[];
-  DATA.txns.push({...t,id:Date.now().toString(),monthKey:mk()});
+  DATA.txns.push({...t,id:Date.now().toString(),monthKey:(t.date||today()).slice(0,7)});
   saveData();render();
   document.getElementById("lAmount").value="";
   document.getElementById("lNote").value="";
