@@ -995,8 +995,9 @@ function handleImportLink() {
     const name = cleanNote(d.name), key = findByName(DATA.debts, name);
     return {key, name, icon:cleanNote(d.icon)||"💳", remaining:+d.remaining, monthly:+d.monthly||0, bank:cleanNote(d.bank),
             old: key ? (DATA.debts[key].remaining ?? DATA.debts[key].total) : null,
-            bankChanged: key ? (DATA.debts[key].bank||"") !== cleanNote(d.bank) : false};
-  }).filter(d => d.old === null || d.bankChanged || Math.abs(d.old - d.remaining) >= 0.005);
+            bankChanged: key ? (DATA.debts[key].bank||"") !== cleanNote(d.bank) : false,
+            monthlyChanged: key ? (+d.monthly||0) > 0 && (DATA.debts[key].monthly||0) !== +d.monthly : false};
+  }).filter(d => d.old === null || d.bankChanged || d.monthlyChanged || Math.abs(d.old - d.remaining) >= 0.005);
   const assetOps = (pkg.assets||[]).filter(a=>a.name&&a.value>=0).map(a => {
     const name = cleanNote(a.name), key = findByName(DATA.assets, name);
     return {key, name, type: ASSET_TYPES[a.type] ? a.type : "cash", value:+a.value, bank:cleanNote(a.bank),
@@ -1004,8 +1005,18 @@ function handleImportLink() {
             bankChanged: key ? (DATA.assets[key].bank||"") !== cleanNote(a.bank) : false};
   }).filter(a => a.old === null || a.bankChanged || Math.abs(a.old - a.value) >= 0.005);
   const newCats = Object.entries(pkg.cats||{}).filter(([k])=>/^[a-z0-9_]{1,40}$/.test(k)&&!(DATA.budgetCats||{})[k]);
+  // setCats: add or update budget categories (name, icon, monthly limit, or weekly amount + weekday)
+  const wdName = ["CN","T2","T3","T4","T5","T6","T7"];
+  const catOps = Object.entries(pkg.setCats||{}).filter(([k])=>/^[a-z0-9_]{1,40}$/.test(k)).map(([k,c]) => {
+    const old = (DATA.budgetCats||{})[k];
+    const nc = {name:cleanNote(c.name)||old?.name||k, icon:cleanNote(c.icon)||old?.icon||"📁", limit:+c.limit||0};
+    if (c.weekly > 0 && c.weekday >= 0 && c.weekday <= 6) { nc.weekly = +c.weekly; nc.weekday = +c.weekday; nc.limit = Math.round(nc.weekly*weekdayCount(mk(),nc.weekday)*100)/100; }
+    if (c.fixed) nc.fixed = true;
+    const same = old && old.name===nc.name && old.icon===nc.icon && !!old.fixed===!!nc.fixed && (nc.weekly ? old.weekly===nc.weekly && old.weekday===nc.weekday : Math.abs((old.limit||0)-nc.limit)<0.005 && !old.weekly);
+    return {k, nc, old, same};
+  }).filter(o => !o.same);
 
-  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats};
+  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats, catOps};
   const label = {income:"💵 Thu", expense:"💸 Chi", saving:"💰 Tiết kiệm"};
   const total = pendingImport.items.reduce((s,i)=>s+(i.type==="income"?i.amount:-i.amount),0);
   const catName = k => (DATA.budgetCats?.[k]||pkg.cats?.[k])?.name || k;
@@ -1020,19 +1031,28 @@ function handleImportLink() {
       <div class="ios-sub">${fmtDate(i.date)} · ${label[i.type]}${i.type==="expense"?" → "+catName(i.cat):""}${i.dup?" · đã có, bỏ qua":""}</div></div>
       <div class="ios-amt" style="color:${i.type==="income"?"var(--green)":"var(--red)"}">${i.type==="income"?"+":"-"}${fmt(i.amount)}</div></div>`).join("")}</div>`;
   if (debtOps.length) html += section("💳 Khoản nợ") + `<div class="ios-list">${debtOps.map(d=>opRow(`${d.icon} ${d.name}`,
-    (d.key ? `Cập nhật · trước đây ${fmt(d.old||0)}` : "Thêm mới") + (d.bank?` · ${d.bank}`:""), fmt(d.remaining), "var(--red)")).join("")}</div>`;
+    (d.key ? (Math.abs((d.old||0)-d.remaining)>=0.005 ? `Cập nhật · trước đây ${fmt(d.old||0)}` : "Giữ nguyên số nợ") : "Thêm mới") + (d.monthly?` · trả ${fmt(d.monthly)}/tháng`:"") + (d.bank?` · ${d.bank}`:""), fmt(d.remaining), "var(--red)")).join("")}</div>`;
   if (assetOps.length) html += section("🏦 Số dư tài khoản / tài sản") + `<div class="ios-list">${assetOps.map(a=>opRow(`${ASSET_TYPES[a.type].icon} ${a.name}`,
     (a.key ? `Cập nhật · trước đây ${fmt(a.old||0)}` : "Thêm mới") + (a.bank?` · ${a.bank}`:""), fmt(a.value), "var(--green)")).join("")}</div>`;
   const bankName = [...debtOps, ...assetOps].map(x=>x.bank).find(Boolean);
-  if (bankName) {
+  if (bankName && assetOps.length) {
     const merged = (obj, ops, field) => { const m = {...Object.fromEntries(Object.entries(obj||{}).map(([k,v])=>[k,{...v}]))}; ops.forEach((o,n)=>{ const k=o.key||("new"+n); m[k]={...(m[k]||{}), [field]:o[field==="remaining"?"remaining":"value"], bank:o.bank}; }); return m; };
     const t = bankTotal(merged(DATA.assets, assetOps, "value"), merged(DATA.debts, debtOps, "remaining"), bankName);
     html += `<div class="ios-alert ios-alert-blue" style="display:flex;justify-content:space-between;margin-top:6px"><span>🏦 Tổng ${bankName} sau cập nhật</span><b>${t<0?"-":""}${fmt(t)}</b></div>`;
   }
+  if (catOps.length) {
+    const nd = new Date(); nd.setDate(1); nd.setMonth(nd.getMonth()+1);
+    const nextMk = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,"0")}`;
+    const tot = Object.entries({...(DATA.budgetCats||{}), ...Object.fromEntries(catOps.map(o=>[o.k,o.nc]))}).reduce((s,[,c])=>s+(c.limit||0),0);
+    html += section(`📁 Ngân sách ${fmtMonthLabel(mk())}`) + `<div class="ios-list">${catOps.map(o=>opRow(`${o.nc.icon} ${o.nc.name}`,
+      (o.old ? `Trước đây ${fmt(o.old.limit||0)}` : "Danh mục mới") + (o.nc.fixed ? " · cố định" : "") + (o.nc.weekly ? ` · ${fmt(o.nc.weekly)}/tuần vào ${wdName[o.nc.weekday]} (tháng sau ${weekdayCount(nextMk,o.nc.weekday)} tuần = ${fmt(o.nc.weekly*weekdayCount(nextMk,o.nc.weekday))})` : ""),
+      fmt(o.nc.limit), "var(--label)")).join("")}</div>
+      <div class="ios-alert ios-alert-blue" style="display:flex;justify-content:space-between"><span>Tổng ngân sách tháng</span><b>${fmt(tot)}</b></div>`;
+  }
   if (newCats.length) html += section("📁 Danh mục ngân sách mới") + `<div class="ios-list">${newCats.map(([k,c])=>opRow(`${cleanNote(c.icon)} ${cleanNote(c.name)}`, "Hạn mức/tháng", fmt(+c.limit||0), "var(--label)")).join("")}</div>`;
   html += `</div><div style="display:flex;justify-content:space-between;font-size:14px;margin:8px 2px 14px"><span style="color:var(--label2)">Giao dịch mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
   document.getElementById("importBody").innerHTML = html;
-  const nOps = pendingImport.items.length + rm.length + debtOps.length + assetOps.length + newCats.length;
+  const nOps = pendingImport.items.length + rm.length + debtOps.length + assetOps.length + newCats.length + catOps.length;
   const btn = document.getElementById("importBtn");
   btn.textContent = nOps ? "Xác nhận cập nhật" : "Không có gì mới";
   btn.disabled = !nOps;
@@ -1044,6 +1064,7 @@ function confirmImport() {
   if (!P) return;
   if (!DATA.budgetCats) DATA.budgetCats = {};
   P.newCats.forEach(([k,c]) => DATA.budgetCats[k] = {name:cleanNote(c.name), icon:cleanNote(c.icon)||"📁", limit:+c.limit||0});
+  P.catOps.forEach(o => DATA.budgetCats[o.k] = o.nc);
   DATA.txns = (DATA.txns||[]).filter(t=>!P.rmIds.has(t.id));
   const base = Date.now();
   P.items.forEach((i,n) => DATA.txns.push({
@@ -1110,8 +1131,22 @@ setTimeout(()=>{
 function saveData() { if(window._saveDB) window._saveDB(DATA); }
 
 // ══ RENDER ══
+function weekdayCount(monthKey, weekday) {
+  const [y,m] = monthKey.split("-").map(Number);
+  let n = 0;
+  for (let d = 1; d <= new Date(y,m,0).getDate(); d++) if (new Date(y,m-1,d).getDay() === weekday) n++;
+  return n;
+}
+// Weekly-billed categories (e.g. rent every Monday): this month's limit = weekly × occurrences
+function applyWeeklyLimits() {
+  Object.values(DATA.budgetCats||{}).forEach(c => {
+    if (c.weekly > 0 && c.weekday >= 0 && c.weekday <= 6) c.limit = Math.round(c.weekly * weekdayCount(mk(), c.weekday) * 100) / 100;
+  });
+}
+
 function render() {
   if (!DATA) return;
+  applyWeeklyLimits();
   renderHeader(); renderBudget(); renderGoals(); renderDebts(); renderAssets(); renderHistory(); renderAlerts();
 }
 
@@ -1525,10 +1560,11 @@ function bankTotal(assets, debts, bank) {
 
 // ══ DAILY STATS ══
 function dailyStats() {
+  // Fixed bills (rent, family, utilities…) are excluded so the daily figure is true discretionary money
   const cats = DATA?.budgetCats || {};
-  const totalBudget = Object.values(cats).reduce((s,c)=>s+c.limit,0);
+  const totalBudget = Object.values(cats).filter(c=>!c.fixed).reduce((s,c)=>s+c.limit,0);
   const m = mk(), t = today();
-  const exp = (DATA?.txns||[]).filter(x=>x.monthKey===m&&x.type==="expense");
+  const exp = (DATA?.txns||[]).filter(x=>x.monthKey===m&&x.type==="expense"&&!cats[x.cat]?.fixed);
   const spentBefore = exp.filter(x=>(x.date||t)<t).reduce((s,x)=>s+x.amount,0);
   const todaySpent  = exp.filter(x=>(x.date||t)===t).reduce((s,x)=>s+x.amount,0);
   const now = new Date();
