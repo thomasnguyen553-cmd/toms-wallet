@@ -480,15 +480,18 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   </div>
 
   <!-- NET WORTH / DEBT PILL -->
-  <div class="debt-pill">
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="debt-pill-label">Tài sản ròng</div>
-      <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:var(--label3);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+  <div class="debt-pill" style="display:block">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="debt-pill-label">Tài sản ròng</div>
+        <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:var(--label3);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:17px;font-weight:700" id="bNetWorth">$0</div>
+        <div style="font-size:11px;color:var(--label2)">Nợ <span id="bDebt" style="color:var(--red)">$0</span> · Tiết kiệm <span id="bSavings" style="color:var(--purple)">$0</span></div>
+      </div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:17px;font-weight:700" id="bNetWorth">$0</div>
-      <div style="font-size:11px;color:var(--label2)">Nợ <span id="bDebt" style="color:var(--red)">$0</span> · Tiết kiệm <span id="bSavings" style="color:var(--purple)">$0</span></div>
-    </div>
+    <div id="bankRow"></div>
   </div>
 
   <!-- ALERTS -->
@@ -990,14 +993,16 @@ function handleImportLink() {
   });
   const debtOps = (pkg.debts||[]).filter(d=>d.name&&d.remaining>=0).map(d => {
     const name = cleanNote(d.name), key = findByName(DATA.debts, name);
-    return {key, name, icon:cleanNote(d.icon)||"💳", remaining:+d.remaining, monthly:+d.monthly||0,
-            old: key ? (DATA.debts[key].remaining ?? DATA.debts[key].total) : null};
-  }).filter(d => d.old === null || Math.abs(d.old - d.remaining) >= 0.005);
+    return {key, name, icon:cleanNote(d.icon)||"💳", remaining:+d.remaining, monthly:+d.monthly||0, bank:cleanNote(d.bank),
+            old: key ? (DATA.debts[key].remaining ?? DATA.debts[key].total) : null,
+            bankChanged: key ? (DATA.debts[key].bank||"") !== cleanNote(d.bank) : false};
+  }).filter(d => d.old === null || d.bankChanged || Math.abs(d.old - d.remaining) >= 0.005);
   const assetOps = (pkg.assets||[]).filter(a=>a.name&&a.value>=0).map(a => {
     const name = cleanNote(a.name), key = findByName(DATA.assets, name);
-    return {key, name, type: ASSET_TYPES[a.type] ? a.type : "cash", value:+a.value,
-            old: key ? DATA.assets[key].value : null};
-  }).filter(a => a.old === null || Math.abs(a.old - a.value) >= 0.005);
+    return {key, name, type: ASSET_TYPES[a.type] ? a.type : "cash", value:+a.value, bank:cleanNote(a.bank),
+            old: key ? DATA.assets[key].value : null,
+            bankChanged: key ? (DATA.assets[key].bank||"") !== cleanNote(a.bank) : false};
+  }).filter(a => a.old === null || a.bankChanged || Math.abs(a.old - a.value) >= 0.005);
   const newCats = Object.entries(pkg.cats||{}).filter(([k])=>/^[a-z0-9_]{1,40}$/.test(k)&&!(DATA.budgetCats||{})[k]);
 
   pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats};
@@ -1015,9 +1020,15 @@ function handleImportLink() {
       <div class="ios-sub">${fmtDate(i.date)} · ${label[i.type]}${i.type==="expense"?" → "+catName(i.cat):""}${i.dup?" · đã có, bỏ qua":""}</div></div>
       <div class="ios-amt" style="color:${i.type==="income"?"var(--green)":"var(--red)"}">${i.type==="income"?"+":"-"}${fmt(i.amount)}</div></div>`).join("")}</div>`;
   if (debtOps.length) html += section("💳 Khoản nợ") + `<div class="ios-list">${debtOps.map(d=>opRow(`${d.icon} ${d.name}`,
-    d.key ? `Cập nhật · trước đây ${fmt(d.old||0)}` : "Thêm mới", fmt(d.remaining), "var(--red)")).join("")}</div>`;
+    (d.key ? `Cập nhật · trước đây ${fmt(d.old||0)}` : "Thêm mới") + (d.bank?` · ${d.bank}`:""), fmt(d.remaining), "var(--red)")).join("")}</div>`;
   if (assetOps.length) html += section("🏦 Số dư tài khoản / tài sản") + `<div class="ios-list">${assetOps.map(a=>opRow(`${ASSET_TYPES[a.type].icon} ${a.name}`,
-    a.key ? `Cập nhật · trước đây ${fmt(a.old||0)}` : "Thêm mới", fmt(a.value), "var(--green)")).join("")}</div>`;
+    (a.key ? `Cập nhật · trước đây ${fmt(a.old||0)}` : "Thêm mới") + (a.bank?` · ${a.bank}`:""), fmt(a.value), "var(--green)")).join("")}</div>`;
+  const bankName = [...debtOps, ...assetOps].map(x=>x.bank).find(Boolean);
+  if (bankName) {
+    const merged = (obj, ops, field) => { const m = {...Object.fromEntries(Object.entries(obj||{}).map(([k,v])=>[k,{...v}]))}; ops.forEach((o,n)=>{ const k=o.key||("new"+n); m[k]={...(m[k]||{}), [field]:o[field==="remaining"?"remaining":"value"], bank:o.bank}; }); return m; };
+    const t = bankTotal(merged(DATA.assets, assetOps, "value"), merged(DATA.debts, debtOps, "remaining"), bankName);
+    html += `<div class="ios-alert ios-alert-blue" style="display:flex;justify-content:space-between;margin-top:6px"><span>🏦 Tổng ${bankName} sau cập nhật</span><b>${t<0?"-":""}${fmt(t)}</b></div>`;
+  }
   if (newCats.length) html += section("📁 Danh mục ngân sách mới") + `<div class="ios-list">${newCats.map(([k,c])=>opRow(`${cleanNote(c.icon)} ${cleanNote(c.name)}`, "Hạn mức/tháng", fmt(+c.limit||0), "var(--label)")).join("")}</div>`;
   html += `</div><div style="display:flex;justify-content:space-between;font-size:14px;margin:8px 2px 14px"><span style="color:var(--label2)">Giao dịch mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
   document.getElementById("importBody").innerHTML = html;
@@ -1040,13 +1051,13 @@ function confirmImport() {
     note:i.note, date:i.date, monthKey:i.date.slice(0,7), importId:P.id}));
   if (!DATA.debts) DATA.debts = {};
   P.debtOps.forEach((d,n) => {
-    if (d.key) { const x = DATA.debts[d.key]; x.remaining = d.remaining; if (d.remaining > (x.total||0)) x.total = d.remaining; if (d.monthly) x.monthly = d.monthly; }
-    else DATA.debts["d"+(base+n)] = {name:d.name, icon:d.icon, total:d.remaining, remaining:d.remaining, monthly:d.monthly};
+    if (d.key) { const x = DATA.debts[d.key]; x.remaining = d.remaining; if (d.remaining > (x.total||0)) x.total = d.remaining; if (d.monthly) x.monthly = d.monthly; x.bank = d.bank; }
+    else DATA.debts["d"+(base+n)] = {name:d.name, icon:d.icon, total:d.remaining, remaining:d.remaining, monthly:d.monthly, bank:d.bank};
   });
   if (!DATA.assets) DATA.assets = {};
   P.assetOps.forEach((a,n) => {
-    if (a.key) DATA.assets[a.key].value = a.value;
-    else DATA.assets["a"+(base+n)] = {name:a.name, type:a.type, value:a.value};
+    if (a.key) { DATA.assets[a.key].value = a.value; DATA.assets[a.key].bank = a.bank; }
+    else DATA.assets["a"+(base+n)] = {name:a.name, type:a.type, value:a.value, bank:a.bank};
   });
   if (!DATA.imports) DATA.imports = {};
   DATA.imports[P.id] = today();
@@ -1119,7 +1130,13 @@ function renderHeader() {
   const totalDebt      = Object.values(DATA.debts||{}).reduce((s,d)=>s+(d.remaining??d.total),0);
   const totalSaved     = Object.values(DATA.goals||{}).reduce((s,g)=>s+(g.saved||0),0);
   const totalAssets    = Object.values(DATA.assets||{}).reduce((s,a)=>s+a.value,0);
-  const netWorth       = bal + totalSaved + totalAssets - totalDebt;
+  const netWorth       = totalSaved + totalAssets - totalDebt;
+  const banks = [...new Set([...Object.values(DATA.assets||{}),...Object.values(DATA.debts||{})].map(x=>x.bank).filter(Boolean))];
+  document.getElementById("bankRow").innerHTML = banks.map(b => {
+    const t = bankTotal(DATA.assets, DATA.debts, b);
+    return `<div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid var(--sep)">
+      <span style="color:var(--label2)">🏦 Tổng ${b}</span><b style="color:${sensitiveHidden?"var(--label3)":t<0?"var(--red)":"var(--green)"}">${sensitiveHidden?"••••••":(t<0?"-":"")+fmt(t)}</b></div>`;
+  }).join("");
 
   const masked = "••••••";
   document.getElementById("bIncome").textContent  = fmt(income);
@@ -1498,6 +1515,12 @@ function setGoalsSeg(s) {
     document.getElementById("seg-"+t).classList.toggle("active",t===s);
     document.getElementById("tab-"+t).classList.toggle("hidden",t!==s);
   });
+}
+
+function bankTotal(assets, debts, bank) {
+  const a = Object.values(assets||{}).filter(x=>x.bank===bank).reduce((s,x)=>s+(+x.value||0),0);
+  const d = Object.values(debts||{}).filter(x=>x.bank===bank).reduce((s,x)=>s+(+(x.remaining??x.total)||0),0);
+  return a - d;
 }
 
 // ══ DAILY STATS ══
