@@ -1063,7 +1063,14 @@ function handleImportLink() {
     return {k, nc, old, same};
   }).filter(o => !o.same);
 
-  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats, catOps};
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"");
+  const goalOps = (pkg.goals||[]).filter(g=>g.name&&g.target>0).map(g => {
+    const name = cleanNote(g.name), key = findByName(DATA.goals, name), old = key ? DATA.goals[key] : null;
+    const ng = {name, icon:cleanNote(g.icon)||"🎯", target:+g.target, startDate: isDate(g.startDate)?g.startDate:"", deadline: isDate(g.deadline)?g.deadline:""};
+    const same = old && old.target===ng.target && (old.deadline||"")===ng.deadline && (old.startDate||"")===ng.startDate && old.icon===ng.icon;
+    return {key, ng, old, same};
+  }).filter(o => !o.same);
+  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats, catOps, goalOps};
   const label = {income:"💵 Thu", expense:"💸 Chi", saving:"💰 Tiết kiệm"};
   const total = pendingImport.items.reduce((s,i)=>s+(i.type==="income"?i.amount:-i.amount),0);
   const catName = k => (DATA.budgetCats?.[k]||pkg.cats?.[k])?.name || k;
@@ -1096,10 +1103,13 @@ function handleImportLink() {
       fmt(o.nc.limit), "var(--label)")).join("")}</div>
       <div class="ios-alert ios-alert-blue" style="display:flex;justify-content:space-between"><span>Tổng ngân sách tháng</span><b>${fmt(tot)}</b></div>`;
   }
+  if (goalOps.length) html += section("🎯 Mục tiêu tiết kiệm") + `<div class="ios-list">${goalOps.map(o=>opRow(`${o.ng.icon} ${o.ng.name}`,
+    (o.old ? "Cập nhật" : "Thêm mới") + (o.ng.deadline ? ` · ${o.ng.startDate?fmtDate(o.ng.startDate)+" → ":""}${fmtDate(o.ng.deadline)}` : " · không hạn"),
+    fmt(o.ng.target), "var(--purple)")).join("")}</div>`;
   if (newCats.length) html += section("📁 Danh mục ngân sách mới") + `<div class="ios-list">${newCats.map(([k,c])=>opRow(`${cleanNote(c.icon)} ${cleanNote(c.name)}`, "Hạn mức/tháng", fmt(+c.limit||0), "var(--label)")).join("")}</div>`;
   html += `</div><div style="display:flex;justify-content:space-between;font-size:14px;margin:8px 2px 14px"><span style="color:var(--label2)">Giao dịch mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
   document.getElementById("importBody").innerHTML = html;
-  const nOps = pendingImport.items.length + rm.length + debtOps.length + assetOps.length + newCats.length + catOps.length;
+  const nOps = pendingImport.items.length + rm.length + debtOps.length + assetOps.length + newCats.length + catOps.length + goalOps.length;
   const btn = document.getElementById("importBtn");
   btn.textContent = nOps ? "Xác nhận cập nhật" : "Không có gì mới";
   btn.disabled = !nOps;
@@ -1112,6 +1122,8 @@ function confirmImport() {
   if (!DATA.budgetCats) DATA.budgetCats = {};
   P.newCats.forEach(([k,c]) => DATA.budgetCats[k] = {name:cleanNote(c.name), icon:cleanNote(c.icon)||"📁", limit:+c.limit||0});
   P.catOps.forEach(o => DATA.budgetCats[o.k] = o.nc);
+  if (!DATA.goals) DATA.goals = {};
+  P.goalOps.forEach((o,n) => { if (o.key) Object.assign(DATA.goals[o.key], o.ng); else DATA.goals["g"+(Date.now()+n)] = {...o.ng, saved:0}; });
   DATA.txns = (DATA.txns||[]).filter(t=>!P.rmIds.has(t.id));
   const base = Date.now();
   P.items.forEach((i,n) => DATA.txns.push({
@@ -1819,10 +1831,13 @@ function openWeeklyReview() {
   Object.entries(goals).forEach(([k,g])=>{
     const saved = g.saved||0, pct = g.target>0?Math.min(saved/g.target*100,100):0;
     const tgt = calcTodayTarget(g);
-    const weeksLeft = g.deadline ? Math.max((new Date(g.deadline)-new Date())/(7*864e5),0) : null;
+    const later = g.startDate && new Date(g.startDate) > new Date();
+    const from = later ? new Date(g.startDate) : new Date();
+    const weeksLeft = g.deadline ? Math.max((new Date(g.deadline)-from)/(7*864e5),0) : null;
     const need = g.target - saved;
     const perWeek = weeksLeft>0 ? need/weeksLeft : null;
     const status = pct>=100 ? `<span style="color:var(--green)">🏆 Đã đạt</span>`
+      : later ? `<span style="color:var(--label2)">🕒 Bắt đầu ${fmtDate(g.startDate)}</span>`
       : tgt===null ? "" : saved>=tgt ? `<span style="color:var(--green)">✅ Đúng tiến độ</span>` : `<span style="color:var(--orange)">⏳ Chậm ${fmt(tgt-saved)}</span>`;
     html += `<div class="review-row">
       <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:6px"><span>${g.icon||"🎯"} ${g.name}</span><span style="font-size:12px">${status}</span></div>
