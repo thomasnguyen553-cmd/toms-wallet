@@ -199,6 +199,53 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 .set-row:last-child{border-bottom:none}
 .set-row input,.set-row select{background:var(--bg3);border:none;border-radius:8px;color:var(--label);padding:6px 8px;font-size:14px}
 
+/* CHARTS (palette validated against app surfaces #1C1C1E dark / #FFFFFF light) */
+:root{--viz-1:#3987e5;--viz-2:#d95926;--viz-3:#199e70;--viz-grid:#2c2c2a;--viz-axis:#4a4a46;--viz-muted:#898781;
+  --st-good:#0ca30c;--st-warn:#fab219;--st-serious:#ec835a;--st-crit:#d03b3b}
+[data-theme="light"]{--viz-1:#2a78d6;--viz-2:#eb6834;--viz-3:#1baf7a;--viz-grid:#e1e0d9;--viz-axis:#c3c2b7}
+.vz-card{background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.vz-h{font-size:15px;font-weight:600;margin-bottom:2px}
+.vz-sub{font-size:12px;color:var(--label2);margin-bottom:12px;line-height:1.5}
+.vz-legend{display:flex;gap:14px;font-size:12px;color:var(--label2);margin-bottom:10px;flex-wrap:wrap}
+.vz-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.vz-plot{position:relative;height:140px;margin-left:40px}
+.vz-grid{position:absolute;left:0;right:0;border-top:1px solid var(--viz-grid)}
+.vz-grid.base{border-top-color:var(--viz-axis)}
+.vz-grid span{position:absolute;right:100%;margin-right:6px;transform:translateY(-50%);font-size:10px;color:var(--viz-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vz-cols{position:absolute;inset:0;display:flex}
+.vz-grp{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px;cursor:pointer;min-width:24px}
+.vz-grp:active,.vz-grp.on{background:rgba(127,127,127,.08);border-radius:6px 6px 0 0}
+.vz-bar{width:12px;border-radius:4px 4px 0 0}
+.vz-x{display:flex;margin-left:40px;margin-top:6px}
+.vz-x span{flex:1;text-align:center;font-size:11px;color:var(--viz-muted)}
+.vz-row{margin-bottom:13px;cursor:pointer}
+.vz-row-top{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:5px}
+.vz-row-top .v{color:var(--label2);white-space:nowrap;font-size:12px}
+.vz-track{position:relative;height:8px;background:rgba(120,120,128,.16);border-radius:4px}
+.vz-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--viz-1)}
+.vz-tick{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--label);border-radius:1px}
+.vz-seg{display:flex;gap:2px;height:16px;margin:2px 0 12px}
+.vz-seg div{border-radius:4px;min-width:4px;cursor:pointer}
+.vz-key{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-top:1px solid var(--sep)}
+.vz-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px}
+.vz-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--label);white-space:nowrap}
+.vz-pill b{display:inline-flex;width:17px;height:17px;border-radius:50%;align-items:center;justify-content:center;color:#fff;font-size:10px}
+.vz-score{font-size:52px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.vz-gauge{height:8px;border-radius:4px;background:rgba(120,120,128,.16);margin:12px 0 6px;overflow:hidden}
+.vz-gauge div{height:100%;border-radius:4px}
+.vz-check{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--sep)}
+.vz-check .n{font-size:13px;font-weight:500}
+.vz-check .h{font-size:11px;color:var(--label2);margin-top:2px}
+.vz-check .r{text-align:right;flex-shrink:0}
+.vz-check .r div:first-child{font-size:13px;font-weight:600;margin-bottom:3px}
+.vz-advice{background:var(--bg3);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.6}
+.vz-tip{position:fixed;z-index:9990;background:var(--bg4);color:var(--label);font-size:12px;line-height:1.55;padding:7px 10px;border-radius:9px;white-space:pre-line;display:none;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4);max-width:240px}
+details.vz-more summary{font-size:12px;color:var(--blue);cursor:pointer;margin-top:6px;list-style:none}
+.vz-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.vz-table th,.vz-table td{padding:5px 4px;text-align:right;border-bottom:1px solid var(--sep);font-variant-numeric:tabular-nums}
+.vz-table th{color:var(--label2);font-weight:500}
+.vz-table th:first-child,.vz-table td:first-child{text-align:left}
+
 /* LIGHT MODE */
 [data-theme="light"]{
   --bg:#F2F2F7;--bg2:#fff;--bg3:#F2F2F7;--bg4:#E5E5EA;
@@ -2072,13 +2119,212 @@ function showToast(msg,type="ok"){
 
 document.getElementById("lDate").value=today();
 
-// ══ LOCAL ANALYTICS DASHBOARD ══
+// ══ ANALYTICS DASHBOARD ══
+const ST = {
+  good:   {c:"var(--st-good)",    i:"✓",  l:"Tốt",       p:100, ink:"#fff"},
+  warn:   {c:"var(--st-warn)",    i:"!",  l:"Cần chú ý", p:65,  ink:"#0b0b0b"},
+  serious:{c:"var(--st-serious)", i:"!!", l:"Đáng lo",   p:35,  ink:"#fff"},
+  crit:   {c:"var(--st-crit)",    i:"✕",  l:"Nguy hiểm", p:10,  ink:"#fff"},
+};
+const stPill = (s, label) => `<span class="vz-pill"><b style="background:${ST[s].c};color:${ST[s].ink}">${ST[s].i}</b>${label||ST[s].l}</span>`;
+const escTxt = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt0 = n => "$" + Math.round(Math.abs(n)).toLocaleString("en-AU");
+const monthKeyOffset = n => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
+const shortMonth = k => "T" + (+k.slice(5)) + (k.slice(0,4) !== String(new Date().getFullYear()) ? "/" + k.slice(2,4) : "");
+const niceMax = n => { if (n <= 0) return 100; const p = 10 ** Math.floor(Math.log10(n)), f = n / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
 
-function statTile(label, val, color, signed) {
-  const display = signed ? (val>=0?"+":"-")+fmt(val) : fmt(val);
-  return `<div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
-    <div style="font-size:10px;color:var(--label2);margin-bottom:2px">${label}</div>
-    <div style="font-size:14px;font-weight:700;color:${color}">${display}</div>
+function monthTotals(k) {
+  const t = (DATA.txns||[]).filter(x => x.monthKey === k);
+  return { inc: t.filter(x => x.type === "income" && !x.rollover).reduce((s,x) => s + x.amount, 0),
+           exp: t.filter(x => x.type === "expense").reduce((s,x) => s + x.amount, 0) };
+}
+// The month to analyse: this month once it has spending, otherwise last month
+function analysisMonth() {
+  const cur = mk();
+  return (DATA.txns||[]).some(t => t.monthKey === cur && t.type === "expense") ? cur : monthKeyOffset(-1);
+}
+
+function healthReport() {
+  const debts = Object.values(DATA.debts||{}), assets = Object.values(DATA.assets||{});
+  const debtAmt = d => +(d.remaining ?? d.total) || 0;
+  const totalDebt = debts.reduce((s,d) => s + debtAmt(d), 0);
+  const cash = assets.filter(a => a.type === "cash").reduce((s,a) => s + (+a.value||0), 0);
+  const saved = Object.values(DATA.goals||{}).reduce((s,g) => s + (g.saved||0), 0);
+  const netWorth = assets.reduce((s,a) => s + (+a.value||0), 0) + saved - totalDebt;
+
+  const withInc = [0,-1,-2,-3].map(monthKeyOffset).map(k => ({k, ...monthTotals(k)})).filter(x => x.inc > 0);
+  const past = withInc.filter(x => x.k !== mk()).slice(0,3);
+  const used = past.length ? past : withInc.slice(0,1);
+  const avgInc = used.length ? used.reduce((s,x) => s + x.inc, 0) / used.length : 0;
+  const avgExp = used.length ? used.reduce((s,x) => s + x.exp, 0) / used.length : 0;
+  const monthlyNeed = Object.values(DATA.budgetCats||{}).reduce((s,c) => s + (c.limit||0), 0) || avgExp;
+
+  const items = [];
+  if (avgInc > 0) {
+    const r = (avgInc - avgExp) / avgInc;
+    items.push({name:"Tỉ lệ tiết kiệm", val:`${Math.round(r*100)}% thu nhập`,
+      s: r >= .2 ? "good" : r >= .05 ? "warn" : r >= 0 ? "serious" : "crit",
+      hint: r < 0 ? `Chi nhiều hơn thu ${fmt0(avgExp-avgInc)}/tháng` : `Dư ${fmt0(avgInc-avgExp)}/tháng`});
+  }
+  if (avgInc > 0) {
+    const r = totalDebt / avgInc;
+    items.push({name:"Nợ so với thu nhập", val: totalDebt ? `${r.toFixed(1)} tháng thu nhập` : "Không nợ",
+      s: r < .5 ? "good" : r < 2 ? "warn" : r < 4 ? "serious" : "crit", hint: totalDebt ? `Tổng nợ ${fmt0(totalDebt)}` : ""});
+  }
+  if (monthlyNeed > 0 && assets.length) {
+    const r = cash / monthlyNeed;
+    items.push({name:"Quỹ khẩn cấp", val:`${r.toFixed(1)} tháng chi tiêu`,
+      s: r >= 3 ? "good" : r >= 1 ? "warn" : r >= .5 ? "serious" : "crit",
+      hint:`Tiền mặt ${fmt0(cash)} · nên có 3 tháng = ${fmt0(monthlyNeed*3)}`});
+  }
+  const hi = debts.filter(d => /credit|visa|master|amex|zip|afterpay|steppay|klarna|humm|latitude/i.test(d.name||"") && debtAmt(d) > 0);
+  if (debts.length) {
+    const amt = hi.reduce((s,d) => s + debtAmt(d), 0), base = avgInc || monthlyNeed || 1;
+    items.push({name:"Nợ lãi cao (thẻ, trả góp)", val: amt ? fmt0(amt) : "Không có",
+      s: !amt ? "good" : amt < base*.25 ? "warn" : amt < base ? "serious" : "crit",
+      hint: hi.map(d => d.name).join(", ")});
+  }
+  const ak = analysisMonth(), sp = monthSpend(ak);
+  const cs = Object.entries(DATA.budgetCats||{}).filter(([,c]) => c.limit > 0);
+  if (cs.length && Object.keys(sp).length) {
+    const ok = cs.filter(([k,c]) => (sp[k]||0) <= c.limit).length, r = ok / cs.length;
+    items.push({name:`Giữ ngân sách ${shortMonth(ak)}`, val:`${ok}/${cs.length} danh mục`,
+      s: r >= .8 ? "good" : r >= .6 ? "warn" : r >= .4 ? "serious" : "crit", hint:"Số danh mục chi trong hạn mức"});
+  }
+  const score = items.length ? Math.round(items.reduce((s,x) => s + ST[x.s].p, 0) / items.length) : null;
+
+  const advice = [];
+  if (hi.length) {
+    const top = hi.slice().sort((a,b) => debtAmt(b) - debtAmt(a))[0];
+    advice.push(`💳 Ưu tiên trả <b>${escTxt(top.name)}</b> trước (lãi thẻ/trả góp thường cao nhất) và ngừng chi tiêu mới bằng thẻ tín dụng.`);
+  }
+  if (avgInc > 0 && avgExp > avgInc) advice.push(`✂️ Cần cắt khoảng <b>${fmt0(avgExp-avgInc)}/tháng</b> để không phải tiêu vào nợ.`);
+  const ef = items.find(x => x.name === "Quỹ khẩn cấp");
+  if (ef && (ef.s === "crit" || ef.s === "serious")) advice.push(`🛟 Giữ tối thiểu <b>${fmt0(monthlyNeed)}</b> (1 tháng chi tiêu) làm dự phòng; sau khi hết nợ thẻ, tăng dần lên 3 tháng.`);
+  return {items, score, used, totalDebt, cash, netWorth, avgInc, avgExp, monthlyNeed, advice};
+}
+
+function vizTipInit() {
+  if (window._vizTip) return;
+  const tip = document.createElement("div");
+  tip.className = "vz-tip";
+  document.body.appendChild(tip);
+  window._vizTip = tip;
+  let on = null;
+  const show = h => {
+    if (on) on.classList.remove("on");
+    on = h; h.classList.add("on");
+    tip.textContent = h.dataset.tip;
+    tip.style.display = "block";
+    const r = h.getBoundingClientRect(), w = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width/2 - w/2)) + "px";
+    tip.style.top = Math.max(8, r.top - tip.offsetHeight - 8) + "px";
+  };
+  const hide = () => { tip.style.display = "none"; if (on) { on.classList.remove("on"); on = null; } };
+  document.addEventListener("click", e => { const h = e.target.closest("[data-tip]"); h ? show(h) : hide(); });
+  document.addEventListener("mouseover", e => { const h = e.target.closest("[data-tip]"); if (h) show(h); else if (on && !e.target.closest(".vz-tip")) hide(); });
+  window.addEventListener("scroll", hide, {passive:true});
+}
+
+function chartIncomeVsSpend() {
+  const keys = [-5,-4,-3,-2,-1,0].map(monthKeyOffset);
+  const rows = keys.map(k => ({k, ...monthTotals(k)}));
+  if (!rows.some(r => r.inc || r.exp)) return "";
+  const max = niceMax(Math.max(...rows.map(r => Math.max(r.inc, r.exp))));
+  const h = v => (v / max * 100).toFixed(2);
+  const grid = [0, .5, 1].map(f => `<div class="vz-grid${f===0?" base":""}" style="bottom:${f*100}%"><span>${fmt0(max*f)}</span></div>`).join("");
+  const cols = rows.map(r => {
+    const net = r.inc - r.exp;
+    const tip = `${fmtMonthLabel(r.k)}\nThu nhập: ${fmt(r.inc)}\nChi tiêu: ${fmt(r.exp)}\n${net>=0?"Dư":"Thiếu"}: ${fmt(net)}`;
+    return `<div class="vz-grp" data-tip="${escTxt(tip)}">
+      <div class="vz-bar" style="height:${h(r.inc)}%;background:var(--viz-1)"></div>
+      <div class="vz-bar" style="height:${h(r.exp)}%;background:var(--viz-2)"></div></div>`;
+  }).join("");
+  const table = rows.map(r => `<tr><td>${fmtMonthLabel(r.k)}</td><td>${fmt0(r.inc)}</td><td>${fmt0(r.exp)}</td><td>${r.inc-r.exp<0?"-":""}${fmt0(r.inc-r.exp)}</td></tr>`).join("");
+  return `<div class="vz-card">
+    <div class="vz-h">📈 Thu nhập và chi tiêu</div>
+    <div class="vz-sub">6 tháng gần nhất · chạm vào cột để xem chi tiết</div>
+    <div class="vz-legend"><span><i style="background:var(--viz-1)"></i>Thu nhập</span><span><i style="background:var(--viz-2)"></i>Chi tiêu</span></div>
+    <div class="vz-plot">${grid}<div class="vz-cols">${cols}</div></div>
+    <div class="vz-x">${keys.map(k => `<span>${shortMonth(k)}</span>`).join("")}</div>
+    <details class="vz-more"><summary>Xem dạng bảng</summary>
+      <table class="vz-table"><tr><th>Tháng</th><th>Thu</th><th>Chi</th><th>Dư</th></tr>${table}</table></details>
+  </div>`;
+}
+
+function chartCategories(ak) {
+  const cats = DATA.budgetCats || {}, sp = monthSpend(ak);
+  const rows = Object.entries(cats).map(([k,c]) => ({k, name:c.name, icon:c.icon||"💸", spent:sp[k]||0, limit:c.limit||0, fixed:!!c.fixed}))
+    .filter(r => r.spent > 0 || r.limit > 0).sort((a,b) => b.spent - a.spent || b.limit - a.limit);
+  if (!rows.length) return "";
+  const max = Math.max(...rows.map(r => Math.max(r.spent, r.limit))) || 1;
+  const pct = v => (v / max * 100).toFixed(2);
+  const totS = rows.reduce((s,r) => s + r.spent, 0), totL = rows.reduce((s,r) => s + r.limit, 0);
+  const body = rows.map(r => {
+    const over = r.limit > 0 && r.spent > r.limit;
+    const tip = `${r.name}\nĐã chi: ${fmt(r.spent)}\nHạn mức: ${fmt(r.limit)}\n${over ? "Vượt " + fmt(r.spent - r.limit) : "Còn " + fmt(r.limit - r.spent)}`;
+    return `<div class="vz-row" data-tip="${escTxt(tip)}">
+      <div class="vz-row-top"><span>${escTxt(r.icon)} ${escTxt(r.name)}${r.fixed ? ` <span style="color:var(--label3);font-size:11px">cố định</span>` : ""}</span>
+        <span class="v">${over ? stPill("crit", "Vượt " + fmt0(r.spent - r.limit)) : `${fmt0(r.spent)} / ${fmt0(r.limit)}`}</span></div>
+      <div class="vz-track"><div class="vz-fill" style="width:${pct(r.spent)}%"></div>${r.limit > 0 ? `<div class="vz-tick" style="left:${pct(r.limit)}%"></div>` : ""}</div>
+    </div>`;
+  }).join("");
+  const table = rows.map(r => `<tr><td>${escTxt(r.name)}</td><td>${fmt0(r.spent)}</td><td>${fmt0(r.limit)}</td><td>${r.spent>r.limit?"-":""}${fmt0(r.limit-r.spent)}</td></tr>`).join("");
+  return `<div class="vz-card">
+    <div class="vz-h">💸 Chi tiêu theo danh mục · ${fmtMonthLabel(ak)}</div>
+    <div class="vz-sub">Thanh xanh = đã chi · vạch dọc = hạn mức · tổng ${fmt0(totS)} / ${fmt0(totL)}</div>
+    ${body}
+    <details class="vz-more"><summary>Xem dạng bảng</summary>
+      <table class="vz-table"><tr><th>Danh mục</th><th>Đã chi</th><th>Hạn mức</th><th>Còn</th></tr>${table}</table></details>
+  </div>`;
+}
+
+function chartDebts() {
+  const debts = Object.values(DATA.debts||{}).map(d => ({...d, amt: +(d.remaining ?? d.total) || 0})).filter(d => d.amt > 0).sort((a,b) => b.amt - a.amt);
+  const goals = Object.values(DATA.goals||{});
+  if (!debts.length && !goals.length) return "";
+  const slots = ["var(--viz-1)","var(--viz-2)","var(--viz-3)"];
+  const shown = debts.length > 3 ? [...debts.slice(0,2), {name:"Khác", amt: debts.slice(2).reduce((s,d) => s + d.amt, 0), monthly: debts.slice(2).reduce((s,d) => s + (d.monthly||0), 0), other:true}] : debts;
+  const total = debts.reduce((s,d) => s + d.amt, 0);
+  const monthly = debts.reduce((s,d) => s + (+d.monthly||0), 0);
+  let payoff = "";
+  if (total > 0 && monthly > 0) {
+    const n = Math.ceil(total / monthly), d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + n);
+    payoff = `Trả ${fmt0(monthly)}/tháng → hết nợ khoảng <b>tháng ${d.getMonth()+1}/${d.getFullYear()}</b> (${n} tháng, chưa tính lãi)`;
+  }
+  const seg = shown.map((d,i) => `<div style="flex:${d.amt};background:${d.other ? "var(--viz-muted)" : slots[i]}" data-tip="${escTxt(`${d.name}\nCòn nợ: ${fmt(d.amt)}${d.monthly ? `\nTrả ${fmt(d.monthly)}/tháng` : ""}`)}"></div>`).join("");
+  const keys = shown.map((d,i) => `<div class="vz-key"><span><i style="background:${d.other ? "var(--viz-muted)" : slots[i]}"></i>${escTxt(d.name)}</span>
+    <span style="color:var(--label2);font-size:12px">${d.monthly ? fmt0(d.monthly) + "/tháng · " : ""}<b style="color:var(--label);font-size:13px">${fmt0(d.amt)}</b></span></div>`).join("");
+  const goalRows = goals.map(g => {
+    const p = g.target > 0 ? Math.min((g.saved||0) / g.target * 100, 100) : 0;
+    return `<div class="vz-row" data-tip="${escTxt(`${g.name}\nĐã có: ${fmt(g.saved||0)}\nMục tiêu: ${fmt(g.target)}`)}">
+      <div class="vz-row-top"><span>${escTxt(g.icon||"🎯")} ${escTxt(g.name)}</span><span class="v">${Math.round(p)}% · ${fmt0(g.saved||0)} / ${fmt0(g.target)}</span></div>
+      <div class="vz-track"><div class="vz-fill" style="width:${p}%;background:var(--viz-3)"></div></div></div>`;
+  }).join("");
+  return `<div class="vz-card">
+    ${debts.length ? `<div class="vz-h">💳 Nợ còn lại · ${fmt0(total)}</div>
+      <div class="vz-sub">${payoff || "Thêm số trả hàng tháng cho từng khoản nợ để xem ngày hết nợ"}</div>
+      <div class="vz-seg">${seg}</div>${keys}` : ""}
+    ${goals.length ? `<div class="vz-h" style="margin-top:${debts.length ? 14 : 0}px;margin-bottom:10px">🎯 Mục tiêu tiết kiệm</div>${goalRows}` : ""}
+  </div>`;
+}
+
+function cardHealth(H) {
+  if (H.score === null) return `<div class="vz-card"><div class="vz-h">🩺 Sức khỏe tài chính</div><div class="vz-sub" style="margin:0">Ghi thu nhập và cập nhật số dư tài khoản để app đánh giá.</div></div>`;
+  const overall = H.score >= 80 ? "good" : H.score >= 60 ? "warn" : H.score >= 40 ? "serious" : "crit";
+  const label = {good:"Khỏe mạnh", warn:"Tạm ổn", serious:"Cần cải thiện", crit:"Báo động"}[overall];
+  const basis = H.used.length ? `Dựa trên ${H.used.map(x => shortMonth(x.k)).join(", ")} · thu nhập TB ${fmt0(H.avgInc)}/tháng` : "";
+  return `<div class="vz-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px">
+      <div><div class="vz-sub" style="margin-bottom:6px">🩺 Sức khỏe tài chính</div>
+        <div class="vz-score">${H.score}<span style="font-size:18px;color:var(--label2);font-weight:600">/100</span></div></div>
+      ${stPill(overall, label)}
+    </div>
+    <div class="vz-gauge"><div style="width:${H.score}%;background:${ST[overall].c}"></div></div>
+    <div class="vz-sub" style="margin-bottom:4px">${basis}</div>
+    ${H.items.map(x => `<div class="vz-check"><div><div class="n">${x.name}</div>${x.hint ? `<div class="h">${escTxt(x.hint)}</div>` : ""}</div>
+      <div class="r"><div>${x.val}</div>${stPill(x.s)}</div></div>`).join("")}
+    ${H.advice.length ? `<div class="vz-advice"><b>Nên làm tiếp</b><br>${H.advice.join("<br>")}</div>` : ""}
   </div>`;
 }
 
@@ -2086,166 +2332,72 @@ function renderAiTab() {
   const el = document.getElementById("aiDashboard");
   if (!el) return;
   if (!DATA) { el.innerHTML = '<div style="color:var(--label2);text-align:center;padding:40px 0">Đang tải dữ liệu…</div>'; return; }
+  vizTipInit();
 
-  const m = mk();
-  const txns = DATA.txns || [];
+  const m = analysisMonth();
   const cats = DATA.budgetCats || {};
-  const goals = DATA.goals || {};
-  const debts = DATA.debts || {};
-  const assets = DATA.assets || {};
-
-  const mTxns = txns.filter(t => t.monthKey === m);
-  const income = mTxns.filter(t => t.type === "income").reduce((s,t) => s+t.amount, 0);
-  const expense = mTxns.filter(t => t.type === "expense" || t.type === "saving" || t.type === "debt_payment").reduce((s,t) => s+t.amount, 0);
-  const expenseOnly = mTxns.filter(t => t.type === "expense").reduce((s,t) => s+t.amount, 0);
+  const mTxns = (DATA.txns||[]).filter(t => t.monthKey === m);
+  const {inc: income, exp: expense} = monthTotals(m);
   const bal = income - expense;
-  const savingsRate = income > 0 ? (bal / income * 100) : 0;
+  const sp = monthSpend(m);
+  const prev = monthTotals((() => { const [y,mm] = m.split("-").map(Number); const d = new Date(y, mm-2, 1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })());
 
-  const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth()-1);
-  const prevM = `${d0.getFullYear()}-${String(d0.getMonth()+1).padStart(2,"0")}`;
-  const prevTxns = txns.filter(t => t.monthKey === prevM);
-  const prevExpense = prevTxns.filter(t => t.type === "expense" || t.type === "saving" || t.type === "debt_payment").reduce((s,t) => s+t.amount, 0);
-
-  const sp = monthSpend();
-  const totalBudget = Object.values(cats).reduce((s,c) => s+c.limit, 0);
-  const now = new Date();
-  const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const daysLeft = dim - now.getDate() + 1;
-  const tRemain = totalBudget - expenseOnly;
-  const dailyAvail = daysLeft > 0 ? tRemain / daysLeft : 0;
-
-  const catsBySpend = Object.entries(cats)
-    .map(([k,c]) => ({k, name:c.name, icon:c.icon||"💸", spent:sp[k]||0, limit:c.limit}))
-    .sort((a,b) => b.spent - a.spent);
-
-  const totalDebt = Object.values(debts).reduce((s,d) => s+(d.remaining??d.total), 0);
-  const totalAssets = Object.values(assets).reduce((s,a) => s+a.value, 0);
-  const totalGoalSaved = Object.values(goals).reduce((s,g) => s+(g.saved||0), 0);
-  const netWorth = totalGoalSaved + totalAssets - totalDebt;
-
-  // Smart insights
+  const H = healthReport();
   const insights = [];
-  if (bal > 0) insights.push({icon:"✅", color:"var(--green)", text:`Số dư tháng dương: +${fmt(bal)}`});
-  else if (bal < 0) insights.push({icon:"🔴", color:"var(--red)", text:`Chi vượt thu: ${fmt(Math.abs(bal))}`});
-
-  if (income > 0 && savingsRate >= 10) insights.push({icon:"💰", color:"var(--green)", text:`Tỉ lệ tiết kiệm tốt: ${savingsRate.toFixed(1)}%`});
-  else if (income > 0 && savingsRate < 0) insights.push({icon:"⚠️", color:"var(--red)", text:`Chi nhiều hơn thu: âm ${Math.abs(savingsRate).toFixed(1)}%`});
-
-  Object.entries(cats).forEach(([k,c]) => {
-    const s = sp[k]||0;
-    if (s > c.limit) insights.push({icon:"⚠️", color:"var(--red)", text:`${c.icon||""} ${c.name} vượt ${fmt(s-c.limit)} (${Math.round(s/c.limit*100)}%)`});
-    else if (c.limit > 0 && s/c.limit > 0.85) insights.push({icon:"⚡", color:"var(--orange)", text:`${c.icon||""} ${c.name} gần hết ngân sách (${Math.round(s/c.limit*100)}%)`});
-  });
-
-  if (prevExpense > 0) {
-    const chg = (expense - prevExpense) / prevExpense * 100;
-    if (chg > 15) insights.push({icon:"📈", color:"var(--red)", text:`Chi tiêu tăng ${chg.toFixed(0)}% so tháng trước`});
-    else if (chg < -10) insights.push({icon:"📉", color:"var(--green)", text:`Chi tiêu giảm ${Math.abs(chg).toFixed(0)}% so tháng trước 👏`});
+  const overN = Object.entries(cats).filter(([k,c]) => c.limit > 0 && (sp[k]||0) > c.limit).length;
+  if (overN) insights.push({icon:"⚠️", text:`${overN} danh mục vượt hạn mức ${fmtMonthLabel(m)} — xem biểu đồ danh mục ở trên`});
+  if (prev.exp > 0 && expense > 0) {
+    const chg = (expense - prev.exp) / prev.exp * 100;
+    if (chg > 15) insights.push({icon:"📈", text:`Chi tiêu tăng ${chg.toFixed(0)}% so với tháng trước`});
+    else if (chg < -10) insights.push({icon:"📉", text:`Chi tiêu giảm ${Math.abs(chg).toFixed(0)}% so với tháng trước 👏`});
   }
-
-  if (daysLeft > 0 && totalBudget > 0) {
-    if (dailyAvail > 0) insights.push({icon:"💡", color:"var(--blue)", text:`${daysLeft} ngày còn lại — tối đa ${fmt(dailyAvail)}/ngày`});
-    else insights.push({icon:"🚫", color:"var(--red)", text:`Đã vượt ngân sách tháng! Vượt ${fmt(Math.abs(tRemain))}`});
+  if (m === mk()) {
+    const ds = dailyStats();
+    if (ds.totalBudget > 0) insights.push({icon: ds.todayLeft >= 0 ? "💡" : "🚫", text: ds.todayLeft >= 0 ? `Hôm nay còn ${fmt(ds.todayLeft)} · ${ds.daysLeft} ngày còn lại trong tháng` : `Hôm nay đã vượt mức ${fmt(ds.todayLeft)}`});
   }
-
-  Object.values(goals).forEach(g => {
+  Object.values(DATA.goals||{}).forEach(g => {
     const pct = g.target > 0 ? (g.saved||0)/g.target*100 : 0;
-    if (pct >= 100) insights.push({icon:"🏆", color:"var(--green)", text:`${g.icon||"🎯"} ${g.name}: đã hoàn thành!`});
-    else if (pct >= 80) insights.push({icon:"🎯", color:"var(--purple)", text:`${g.icon||"🎯"} ${g.name}: ${pct.toFixed(0)}% — sắp đến đích!`});
+    if (pct >= 100) insights.push({icon:"🏆", text:`${escTxt(g.icon||"🎯")} ${escTxt(g.name)}: đã hoàn thành!`});
+    else if (pct >= 80) insights.push({icon:"🎯", text:`${escTxt(g.icon||"🎯")} ${escTxt(g.name)}: ${pct.toFixed(0)}% — sắp đến đích!`});
   });
+  if (!insights.length) insights.push({icon:"📝", text:"Ghi thêm giao dịch để xem phân tích"});
 
-  if (catsBySpend.length > 0 && catsBySpend[0].spent > 0)
-    insights.push({icon:"📊", color:"var(--label2)", text:`Chi nhiều nhất: ${catsBySpend[0].icon} ${catsBySpend[0].name} — ${fmt(catsBySpend[0].spent)}`});
-
-  if (totalAssets > 0 || totalDebt > 0)
-    insights.push({icon:"💎", color:netWorth>=0?"var(--green)":"var(--red)", text:`Tài sản ròng: ${netWorth>=0?"+":""}${netWorth>=0?fmt(netWorth):"-"+fmt(Math.abs(netWorth))}`});
-
-  if (insights.length === 0)
-    insights.push({icon:"📝", color:"var(--label2)", text:"Ghi thêm giao dịch để xem phân tích"});
-
-  const topExpenses = mTxns.filter(t => t.type === "expense").sort((a,b) => b.amount-a.amount).slice(0,5);
+  const topExpenses = mTxns.filter(t => t.type === "expense").sort((a,b) => b.amount - a.amount).slice(0,5);
 
   el.innerHTML = `
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:600;color:var(--label2);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase">${fmtMonthLabel(m)}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px">
+    ${cardHealth(H)}
+    <div class="vz-card">
+      <div class="vz-sub" style="margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">${fmtMonthLabel(m)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
         ${statTile("Thu nhập", income, "var(--green)")}
         ${statTile("Chi tiêu", expense, "var(--red)")}
-        ${statTile("Số dư", Math.abs(bal), bal>=0?"var(--green)":"var(--red)")}
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
-        <div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
-          <div style="font-size:10px;color:var(--label2);margin-bottom:2px">Tiết kiệm</div>
-          <div style="font-size:14px;font-weight:700;color:${savingsRate>=10?"var(--green)":savingsRate<0?"var(--red)":"var(--label)"}">${income>0?savingsRate.toFixed(1)+"%":"—"}</div>
-        </div>
-        <div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
-          <div style="font-size:10px;color:var(--label2);margin-bottom:2px">Chi/ngày khả dụng</div>
-          <div style="font-size:14px;font-weight:700;color:${dailyAvail>=0?"var(--blue)":"var(--red)"}">${totalBudget>0?(dailyAvail>=0?fmt(dailyAvail):"Vượt"):"—"}</div>
-        </div>
+        ${statTile(bal >= 0 ? "Dư" : "Thiếu", bal, bal >= 0 ? "var(--green)" : "var(--red)")}
       </div>
     </div>
-
-    ${catsBySpend.length > 0 ? `
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">💸 Ngân sách tháng</div>
-      ${catsBySpend.map(c => {
-        const pct = c.limit > 0 ? Math.min(c.spent/c.limit*100, 100) : 0;
-        const over = c.limit > 0 && c.spent > c.limit;
-        const near = !over && c.limit > 0 && c.spent/c.limit > 0.8;
-        const barColor = over ? "var(--red)" : near ? "var(--orange)" : "var(--green)";
-        return `<div style="margin-bottom:9px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px">${c.icon} ${c.name}</span>
-            <span style="font-size:12px;color:${over?"var(--red)":"var(--label2)"}">${fmt(c.spent)} / ${fmt(c.limit)}${over?` <b>+${fmt(c.spent-c.limit)}</b>`:""}</span>
-          </div>
-          <div style="height:5px;background:rgba(120,120,128,.2);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s"></div>
-          </div>
-        </div>`;
-      }).join("")}
-    </div>` : ""}
-
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">✦ Nhận xét thông minh</div>
-      ${insights.map(i => `
-        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px;font-size:13px;line-height:1.5">
-          <span style="flex-shrink:0;width:18px">${i.icon}</span>
-          <span style="color:${i.color}">${i.text}</span>
-        </div>`).join("")}
+    ${chartIncomeVsSpend()}
+    ${chartCategories(m)}
+    ${chartDebts()}
+    <div class="vz-card">
+      <div class="vz-h" style="margin-bottom:10px">✦ Nhận xét</div>
+      ${insights.map(i => `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:9px;font-size:13px;line-height:1.5"><span style="flex-shrink:0;width:18px">${i.icon}</span><span>${i.text}</span></div>`).join("")}
     </div>
-
-    ${Object.keys(goals).length > 0 || totalDebt > 0 ? `
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">🎯 Mục tiêu & Nợ</div>
-      ${Object.values(goals).map(g => {
-        const pct = g.target > 0 ? Math.min((g.saved||0)/g.target*100, 100) : 0;
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px">${g.icon||"🎯"} ${g.name}</span>
-            <span style="font-size:12px;color:var(--label2)">${fmt(g.saved||0)} / ${fmt(g.target)}</span>
-          </div>
-          <div style="height:5px;background:rgba(120,120,128,.2);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--purple);border-radius:3px"></div>
-          </div>
-        </div>`;
-      }).join("")}
-      ${totalDebt > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;padding-top:8px;border-top:1px solid var(--sep)">
-        <span>💳 Tổng nợ còn lại</span>
-        <span style="color:var(--red);font-weight:600">${fmt(totalDebt)}</span>
-      </div>` : ""}
-    </div>` : ""}
-
-    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">🧾 Giao dịch lớn nhất tháng</div>
+    <div class="vz-card">
+      <div class="vz-h" style="margin-bottom:10px">🧾 Giao dịch lớn nhất · ${fmtMonthLabel(m)}</div>
       ${topExpenses.length ? topExpenses.map(t => {
         const c = cats[t.cat];
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(84,84,88,.2);font-size:13px">
-          <span>${c?.icon||"💸"} ${t.note||c?.name||t.cat}</span>
-          <span style="color:var(--red);font-weight:600">-${fmt(t.amount)}</span>
-        </div>`;
-      }).join("") : '<div style="color:var(--label2);font-size:13px">Chưa có giao dịch tháng này</div>'}
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--sep);font-size:13px">
+          <span>${escTxt(c?.icon||"💸")} ${escTxt(t.note||c?.name||t.cat)}</span>
+          <span style="font-weight:600;white-space:nowrap">-${fmt(t.amount)}</span></div>`;
+      }).join("") : '<div style="color:var(--label2);font-size:13px">Chưa có giao dịch</div>'}
     </div>
   `;
+}
+
+function statTile(label, val, color) {
+  return `<div style="background:var(--bg3);border-radius:10px;padding:9px 10px;text-align:center">
+    <div style="font-size:10px;color:var(--label2);margin-bottom:2px">${label}</div>
+    <div style="font-size:14px;font-weight:700;color:${color}">${fmt(val)}</div>
+  </div>`;
 }
 </script>
 </body>
