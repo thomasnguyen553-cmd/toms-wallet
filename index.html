@@ -173,6 +173,32 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 .modal-btn{flex:1;padding:14px;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;display:none;max-width:80vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap}
 
+/* REDESIGN */
+.nav{padding:calc(max(env(safe-area-inset-top),20px) + 10px) 20px 4px}
+.nav-title{font-size:28px}
+.hero-today{font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1.05;margin:2px 0 10px}
+.hero-bar{height:8px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.hero-bar>div{height:100%;border-radius:99px;transition:width .5s}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.65);margin-bottom:14px;display:flex;justify-content:space-between;gap:8px}
+.streak-chip{background:rgba(255,159,10,.18);color:#FFB340;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+.tab-fab{flex:1;display:flex;justify-content:center;align-items:flex-start;border:none;background:none;cursor:pointer}
+.tab-fab span{width:56px;height:56px;margin-top:-22px;border-radius:50%;background:var(--blue);color:#fff;font-size:32px;font-weight:300;line-height:56px;box-shadow:0 6px 20px rgba(10,132,255,.45);display:block}
+.tab-fab:active span{transform:scale(.94)}
+.seg{display:flex;background:var(--bg2);border-radius:11px;padding:3px;margin:4px 16px 4px}
+.seg button{flex:1;border:none;background:none;color:var(--label2);padding:8px 4px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
+.seg button.active{background:var(--bg4);color:var(--label)}
+.qcat{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.qcat .cat-btn{flex-shrink:0;white-space:nowrap;padding:10px 13px;font-size:13px}
+.chip-row{display:flex;gap:6px;margin-bottom:12px}
+.chip{background:var(--bg3);border:1px solid transparent;color:var(--label2);border-radius:99px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer}
+.chip.active{border-color:var(--blue);color:var(--blue);background:rgba(10,132,255,.12)}
+.brief-big{font-size:40px;font-weight:800;text-align:center;letter-spacing:-1px;margin:4px 0 2px}
+.brief-sub{font-size:13px;color:var(--label2);text-align:center;margin-bottom:16px;line-height:1.6}
+.review-row{background:var(--bg3);border-radius:13px;padding:12px 14px;margin-bottom:8px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--sep);font-size:14px}
+.set-row:last-child{border-bottom:none}
+.set-row input,.set-row select{background:var(--bg3);border:none;border-radius:8px;color:var(--label);padding:6px 8px;font-size:14px}
+
 /* LIGHT MODE */
 [data-theme="light"]{
   --bg:#F2F2F7;--bg2:#fff;--bg3:#F2F2F7;--bg4:#E5E5EA;
@@ -219,7 +245,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 </div>
 
 <!-- WARN MODAL -->
-<div class="modal-bg hidden" id="warnModal">
+<div class="modal-bg hidden" id="warnModal" style="z-index:10000">
   <div class="modal">
     <div class="modal-title">⚠️ Vượt ngân sách!</div>
     <div id="warnMsg" style="font-size:14px;color:var(--label2);line-height:1.7;margin-bottom:18px;text-align:center"></div>
@@ -425,60 +451,61 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 <div class="nav">
   <div class="nav-top">
     <div>
-      <div class="nav-eyebrow">Quản lý tài chính</div>
+      <div class="nav-eyebrow" id="greeting">Xin chào Tom</div>
       <div class="nav-title">Tom's <span>Wallet</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
-      <button class="theme-btn" id="notifBtn" onclick="toggleNotif()" title="Thông báo hàng ngày">🔕</button>
+      <div class="sync-dot" id="syncDot" style="background:var(--orange)"></div>
       <div class="month-chip" id="monthBadge">—</div>
+      <button class="theme-btn" onclick="openSettings()" title="Cài đặt">⚙️</button>
     </div>
-  </div>
-  <div class="sync-row">
-    <div class="sync-dot" id="syncDot" style="background:var(--orange)"></div>
-    <span class="sync-text" id="syncLabel">ĐANG TẢI…</span>
-  </div>
-  <div class="link-box">
-    <div class="link-text" id="walletLink">—</div>
-    <button class="copy-btn" onclick="copyLink()">Copy</button>
-  </div>
-  <div style="font-size:9px;color:var(--label3);margin-top:5px" id="walletId"></div>
-</div>
-
-<!-- BALANCE WIDGET -->
-<div class="widget">
-  <div class="widget-row">
-    <div>
-      <div class="widget-label">Còn lại tháng này</div>
-      <div class="widget-val" id="bBalance">$0</div>
-      <div class="widget-month" id="widgetMonth">—</div>
-    </div>
-    <div>
-      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-bottom:3px">
-        <div class="widget-nw-label" style="margin-bottom:0">Tài sản ròng</div>
-        <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
-      </div>
-      <div class="widget-nw-val" id="bNetWorth">$0</div>
-    </div>
-  </div>
-  <div class="widget-stats">
-    <div class="ws"><div class="ws-label">Thu nhập</div><div class="ws-val" style="color:var(--green)" id="bIncome">$0</div></div>
-    <div class="ws"><div class="ws-label">Đã chi</div><div class="ws-val" style="color:var(--red)" id="bExpense">$0</div></div>
-    <div class="ws"><div class="ws-label">Tiết kiệm</div><div class="ws-val" style="color:var(--purple)" id="bSavings">$0</div></div>
   </div>
 </div>
 
-<!-- DEBT PILL -->
-<div class="debt-pill">
-  <div style="display:flex;align-items:center;gap:6px">
-    <div class="debt-pill-label">Tổng nợ còn lại</div>
-    <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:var(--label3);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+<div id="homeHeader">
+  <!-- HERO: DAILY ALLOWANCE -->
+  <div class="widget" onclick="openQuickLog()" style="cursor:pointer">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="widget-label">Hôm nay còn có thể chi</div>
+      <div class="streak-chip" id="streakChip">🔥 0 ngày</div>
+    </div>
+    <div class="hero-today" id="hTodayLeft">$0</div>
+    <div class="hero-bar"><div id="hTodayBar" style="width:0%;background:var(--green)"></div></div>
+    <div class="hero-sub"><span id="hTodaySpent">Đã chi hôm nay $0</span><span id="hDaysLeft">—</span></div>
+    <div class="widget-stats">
+      <div class="ws"><div class="ws-label">Còn lại tháng</div><div class="ws-val" id="bBalance">$0</div></div>
+      <div class="ws"><div class="ws-label">Thu nhập</div><div class="ws-val" style="color:var(--green)" id="bIncome">$0</div></div>
+      <div class="ws"><div class="ws-label">Đã chi</div><div class="ws-val" style="color:var(--red)" id="bExpense">$0</div></div>
+    </div>
   </div>
-  <div class="debt-pill-val" id="bDebt">$0</div>
+
+  <!-- NET WORTH / DEBT PILL -->
+  <div class="debt-pill">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="debt-pill-label">Tài sản ròng</div>
+      <button class="eye-btn" onclick="toggleSensitive()" style="background:none;border:none;color:var(--label3);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center"></button>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:17px;font-weight:700" id="bNetWorth">$0</div>
+      <div style="font-size:11px;color:var(--label2)">Nợ <span id="bDebt" style="color:var(--red)">$0</span> · Tiết kiệm <span id="bSavings" style="color:var(--purple)">$0</span></div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div id="alertZone"></div>
 </div>
 
-<!-- ALERTS -->
-<div id="alertZone"></div>
+<!-- GOALS HUB SEGMENT -->
+<div id="goalsSeg" class="hidden">
+  <div class="seg">
+    <button id="seg-savings" class="active" onclick="setGoalsSeg('savings')">🎯 Tiết kiệm</button>
+    <button id="seg-debt" onclick="setGoalsSeg('debt')">💳 Nợ</button>
+    <button id="seg-assets" onclick="setGoalsSeg('assets')">💎 Tài sản</button>
+  </div>
+  <div style="padding:6px 16px 0">
+    <button class="btn btn-ghost" style="margin-bottom:0;padding:11px" onclick="openWeeklyReview()">📅 Review mục tiêu tuần này</button>
+  </div>
+</div>
 
 <!-- BUDGET TAB -->
 <div class="content" id="tab-budget">
@@ -490,28 +517,87 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
   <div id="nextMonthAdj"></div>
 </div>
 
-<!-- LOG TAB -->
-<div class="content hidden" id="tab-log">
-  <div class="content-header"><div class="content-title">Ghi giao dịch</div></div>
-  <div class="type-toggle">
-    <button class="type-btn" id="btnExp" style="background:var(--red);color:#fff" onclick="setLogType('expense')">💸 Chi tiêu</button>
-    <button class="type-btn" id="btnInc" onclick="setLogType('income')">💵 Thu nhập</button>
+<!-- QUICK LOG SHEET -->
+<div class="modal-bg hidden" id="quickLogModal" onclick="if(event.target===this)closeModal('quickLogModal')">
+  <div class="modal">
+    <div class="type-toggle">
+      <button class="type-btn" id="btnExp" style="background:var(--red);color:#fff" onclick="setLogType('expense')">💸 Chi tiêu</button>
+      <button class="type-btn" id="btnInc" onclick="setLogType('income')">💵 Thu nhập</button>
+    </div>
+    <div class="inp-prefix-wrap">
+      <span class="inp-prefix">$</span>
+      <input type="number" inputmode="decimal" class="inp inp-big" id="lAmount" placeholder="0.00" oninput="updateLogPreview()">
+    </div>
+    <div id="catPickerSection">
+      <div class="qcat" id="catPicker"></div>
+    </div>
+    <input class="inp" id="lNote" placeholder="Ghi chú (vd: Woolworths, Maccas…)">
+    <div class="chip-row">
+      <button class="chip" id="chipToday" onclick="setLogDate(0)">Hôm nay</button>
+      <button class="chip" id="chipYest" onclick="setLogDate(-1)">Hôm qua</button>
+      <input type="date" class="inp" id="lDate" style="margin:0;padding:5px 10px;font-size:13px;flex:1" onchange="syncDateChips()">
+    </div>
+    <div id="logPreview" class="hidden preview-alert" style="margin-bottom:14px"></div>
+    <button class="btn btn-blue" id="logSubmitBtn" onclick="submitLog()">💸 Lưu chi tiêu</button>
   </div>
-  <div class="field-label">Số tiền (AUD)</div>
-  <div class="inp-prefix-wrap">
-    <span class="inp-prefix">$</span>
-    <input type="number" class="inp inp-big" id="lAmount" placeholder="0.00" oninput="updateLogPreview()">
+</div>
+
+<!-- DAILY BRIEFING SHEET -->
+<div class="modal-bg hidden" id="briefModal">
+  <div class="modal">
+    <div class="modal-title" id="briefTitle">☀️ Chào buổi sáng</div>
+    <div id="briefBody"></div>
+    <button class="btn btn-blue" onclick="closeModal('briefModal');openQuickLog()">＋ Ghi chi tiêu ngay</button>
+    <div id="briefExtra"></div>
+    <button class="btn btn-ghost" style="margin-bottom:0" onclick="closeModal('briefModal')">Để sau</button>
   </div>
-  <div id="catPickerSection">
-    <div class="field-label">Danh mục</div>
-    <div class="cat-grid" id="catPicker"></div>
+</div>
+
+<!-- WEEKLY GOAL REVIEW SHEET -->
+<div class="modal-bg hidden" id="weeklyModal">
+  <div class="modal">
+    <div class="modal-title">📅 Review mục tiêu tuần</div>
+    <div id="weeklyBody"></div>
+    <button class="btn btn-green" onclick="completeWeeklyReview()">✓ Đã review xong</button>
+    <button class="btn btn-ghost" style="margin-bottom:0" onclick="snoozeWeeklyReview()">Nhắc lại ngày mai</button>
   </div>
-  <div class="field-label">Ghi chú (tùy chọn)</div>
-  <input class="inp" id="lNote" placeholder="vd: Woolworths, Maccas…">
-  <div class="field-label">Ngày</div>
-  <input type="date" class="inp" id="lDate">
-  <div id="logPreview" class="hidden preview-alert" style="margin-bottom:14px"></div>
-  <button class="btn btn-blue" id="logSubmitBtn" onclick="submitLog()">💸 Lưu chi tiêu</button>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="modal-bg hidden" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
+  <div class="modal">
+    <div class="modal-title">⚙️ Cài đặt</div>
+    <div class="field-label">Nhắc nhở trên điện thoại</div>
+    <div style="background:var(--bg3);border-radius:13px;padding:4px 14px;margin-bottom:10px">
+      <div class="set-row"><span>💸 Nhắc ghi chi tiêu mỗi ngày lúc</span><input type="time" id="remDailyTime" value="20:00"></div>
+      <div class="set-row"><span>🎯 Review mục tiêu mỗi</span>
+        <span style="display:flex;gap:6px">
+          <select id="remWeekDay">
+            <option value="MO">Thứ 2</option><option value="TU">Thứ 3</option><option value="WE">Thứ 4</option>
+            <option value="TH">Thứ 5</option><option value="FR">Thứ 6</option><option value="SA">Thứ 7</option>
+            <option value="SU" selected>Chủ nhật</option>
+          </select>
+          <input type="time" id="remWeekTime" value="19:00">
+        </span>
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="downloadReminders()">📅 Thêm nhắc nhở vào Lịch iPhone</button>
+    <div style="font-size:12px;color:var(--label2);line-height:1.6;margin:-2px 2px 16px">
+      Lịch iPhone sẽ báo thông báo đúng giờ kể cả khi app đang đóng. Nhấn vào thông báo → mở link Tom's Wallet.
+    </div>
+    <div class="field-label">Khác</div>
+    <div style="background:var(--bg3);border-radius:13px;padding:4px 14px;margin-bottom:14px">
+      <div class="set-row"><span>Thông báo khi mở app</span><button class="theme-btn" id="notifBtn" onclick="toggleNotif()">🔕</button></div>
+      <div class="set-row"><span>Giao diện sáng / tối</span><button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button></div>
+      <div class="set-row"><span>Đồng bộ</span><span class="sync-text" id="syncLabel">ĐANG TẢI…</span></div>
+      <div class="set-row" style="display:block">
+        <div style="font-size:12px;color:var(--label2);margin-bottom:6px">Link ví (mở trên thiết bị khác)</div>
+        <div class="link-box"><div class="link-text" id="walletLink">—</div><button class="copy-btn" onclick="copyLink()">Copy</button></div>
+        <div style="font-size:9px;color:var(--label3);margin-top:5px" id="walletId"></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="margin-bottom:0" onclick="closeModal('settingsModal')">Đóng</button>
+  </div>
 </div>
 
 <!-- SAVINGS TAB -->
@@ -578,12 +664,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);opacity:
 
 <!-- BOTTOM TAB BAR -->
 <div class="tab-bar">
-  <button class="tab-item active" onclick="showTab('budget',this)"><div class="tab-icon">💰</div><div class="tab-label">Ngân sách</div></button>
-  <button class="tab-item" onclick="showTab('log',this)"><div class="tab-icon">➕</div><div class="tab-label">Ghi</div></button>
-  <button class="tab-item" onclick="showTab('savings',this)"><div class="tab-icon">🎯</div><div class="tab-label">Tiết kiệm</div></button>
-  <button class="tab-item" onclick="showTab('debt',this)"><div class="tab-icon">💳</div><div class="tab-label">Nợ</div></button>
-  <button class="tab-item" onclick="showTab('assets',this)"><div class="tab-icon">💎</div><div class="tab-label">Tài sản</div></button>
+  <button class="tab-item active" onclick="showTab('budget',this)"><div class="tab-icon">🏠</div><div class="tab-label">Tổng quan</div></button>
   <button class="tab-item" onclick="showTab('history',this)"><div class="tab-icon">📋</div><div class="tab-label">Lịch sử</div></button>
+  <button class="tab-fab" onclick="openQuickLog()" aria-label="Ghi chi tiêu"><span>＋</span></button>
+  <button class="tab-item" onclick="showTab('goals',this)"><div class="tab-icon">🎯</div><div class="tab-label">Mục tiêu</div></button>
   <button class="tab-item" onclick="showTab('ai',this)"><div class="tab-icon">📊</div><div class="tab-label">Phân tích</div></button>
 </div>
 
@@ -739,23 +823,16 @@ async function toggleNotif() {
 async function fireNotif(force) {
   if (localStorage.getItem(NOTIF_ON_KEY) !== "1") return;
   if (!('Notification' in window) || Notification.permission !== "granted") return;
-  const today = new Date().toISOString().slice(0,10);
-  if (!force && localStorage.getItem(NOTIF_DATE_KEY) === today) return;
+  const todayStr = isoLocal(new Date());
+  if (!force && localStorage.getItem(NOTIF_DATE_KEY) === todayStr) return;
   if (!DATA) return;
 
-  const cats = DATA.budgetCats || {};
-  const sp = monthSpend();
-  const totalBudget = Object.values(cats).reduce((s,c)=>s+c.limit,0);
-  const tSpent = Object.keys(cats).reduce((s,k)=>s+(sp[k]||0),0);
-  const tRemain = totalBudget - tSpent;
-  const now = new Date();
-  const daysLeft = new Date(now.getFullYear(),now.getMonth()+1,0).getDate() - now.getDate() + 1;
-  const daily = daysLeft > 0 ? tRemain / daysLeft : 0;
-
-  const title = daily >= 0 ? "💰 Tom's Wallet" : "⚠️ Tom's Wallet";
-  const body  = daily >= 0
-    ? `Hôm nay có thể chi: $${daily.toFixed(2)}\nCòn lại tháng: $${tRemain.toFixed(2)} · ${daysLeft} ngày còn lại`
-    : `Đã vượt budget tháng này!\nVượt: $${Math.abs(tRemain).toFixed(2)} · Hạn chế chi tiêu`;
+  const ds = dailyStats();
+  const title = ds.todayLeft >= 0 ? "💰 Tom's Wallet" : "⚠️ Tom's Wallet";
+  const body  = ds.todayLeft >= 0
+    ? `Hôm nay còn có thể chi: ${fmt(ds.todayLeft)}\nCòn lại tháng: ${fmt(ds.monthRemain)} · ${ds.daysLeft} ngày`
+    : `Hôm nay đã vượt mức ${fmt(ds.todayLeft)}! Hạn chế chi tiêu.`;
+  const today = todayStr;
 
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -786,7 +863,9 @@ function toggleSensitive() {
 
 // ══ HELPERS ══
 const fmt   = n => "$"+Math.abs(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
-const today = () => new Date().toISOString().slice(0,10);
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const today = () => isoLocal(new Date());
+const dayOffset = n => { const d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
 const mk    = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
 const fmtMonthLabel = key => { const [y,m]=key.split("-"); const names=["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"]; return `${names[+m-1]}/${y}`; };
 const fmtDate = iso => { if(!iso)return"—"; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; };
@@ -811,7 +890,8 @@ function updateClock() {
   const months = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"];
   const label = `${months[d.getMonth()]} ${d.getFullYear()}`;
   document.getElementById("monthBadge").textContent = label;
-  document.getElementById("widgetMonth").textContent = label;
+  const h = d.getHours();
+  document.getElementById("greeting").textContent = h<11?"☀️ Chào buổi sáng, Tom":h<18?"👋 Chào buổi chiều, Tom":"🌙 Chào buổi tối, Tom";
 }
 updateClock();
 setInterval(updateClock, 60000);
@@ -838,7 +918,11 @@ window._onRemoteData = d => {
   if (!historyMonth) historyMonth = mk();
   render();
   fireNotif();
+  if (!window._promptsChecked) { window._promptsChecked = true; setTimeout(maybeShowPrompts, 800); }
 };
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && DATA) { updateClock(); render(); maybeShowPrompts(); }
+});
 setTimeout(()=>{
   if (!synced) {
     const raw = localStorage.getItem("tw_data");
@@ -850,6 +934,7 @@ setTimeout(()=>{
     if (!historyMonth) historyMonth = mk();
     render();
     fireNotif();
+    setTimeout(maybeShowPrompts, 800);
   }
 },3500);
 function saveData() { if(window._saveDB) window._saveDB(DATA); }
@@ -881,9 +966,27 @@ function renderHeader() {
   document.getElementById("bIncome").textContent  = fmt(income);
   document.getElementById("bExpense").textContent = fmt(expense);
   const bb = document.getElementById("bBalance");
-  bb.textContent = (bal>=0?"+":"-")+fmt(bal);
+  bb.textContent = (bal>=0?"":"-")+fmt(bal);
   bb.style.color = bal>=0?"#fff":"var(--red)";
   document.getElementById("bSavings").textContent = fmt(monthlySavings);
+
+  const ds = dailyStats();
+  const left = document.getElementById("hTodayLeft");
+  if (ds.totalBudget > 0) {
+    left.textContent = (ds.todayLeft<0?"-":"")+fmt(ds.todayLeft);
+    left.style.color = ds.todayLeft<0?"var(--red)":ds.todayLeft<ds.allowance*.25?"var(--orange)":"#fff";
+  } else {
+    left.textContent = "—";
+    left.style.color = "#fff";
+  }
+  const usedPct = ds.allowance>0?Math.min(ds.todaySpent/ds.allowance*100,100):(ds.todaySpent>0?100:0);
+  const bar = document.getElementById("hTodayBar");
+  bar.style.width = usedPct+"%";
+  bar.style.background = ds.todayLeft<0?"var(--red)":usedPct>75?"var(--orange)":"var(--green)";
+  document.getElementById("hTodaySpent").textContent = `Đã chi hôm nay ${fmt(ds.todaySpent)} / ${fmt(Math.max(ds.allowance,0))}`;
+  document.getElementById("hDaysLeft").textContent = `${ds.daysLeft} ngày còn lại`;
+  const st = loggingStreak();
+  document.getElementById("streakChip").textContent = st>0?`🔥 ${st} ngày`:"🔥 Bắt đầu streak";
   document.getElementById("bDebt").textContent    = sensitiveHidden ? masked : fmt(totalDebt);
   const nw = document.getElementById("bNetWorth");
   nw.textContent = sensitiveHidden ? masked : (netWorth>=0?"+":"-")+fmt(netWorth);
@@ -901,9 +1004,6 @@ function renderBudget() {
   const tRemain=totalBudget-tSpent;
   const isOver=tRemain<0;
   const tPct=totalBudget>0?Math.min((tSpent/totalBudget)*100,100):0;
-  const now2=new Date(), dim=new Date(now2.getFullYear(),now2.getMonth()+1,0).getDate();
-  const daysLeft=dim-now2.getDate()+1;
-  const daily=daysLeft>0?tRemain/daysLeft:0;
   const summary=Object.keys(cats).length?`<div style="background:var(--bg2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:15px;font-weight:600">Tổng ngân sách tháng</div>
@@ -915,10 +1015,6 @@ function renderBudget() {
     <div style="display:flex;justify-content:space-between;font-size:12px">
       <span style="color:var(--label2)">Đã chi <b style="color:${isOver?"var(--red)":"var(--label)"}">${fmt(tSpent)}</b></span>
       <span style="color:${isOver?"var(--red)":"var(--green)"}">${isOver?"Vượt "+fmt(-tRemain):"Còn "+fmt(tRemain)}</span>
-    </div>
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:12px;color:var(--label2)">📅 Có thể chi hôm nay</div>
-      <div style="font-size:16px;font-weight:700;color:${daily>=0?"var(--green)":"var(--red)"}">${daily>=0?"":"−"}${fmt(Math.abs(daily))}<span style="font-size:10px;font-weight:400;color:var(--label2)">/ngày</span></div>
     </div>
   </div>`:"";
 
@@ -991,7 +1087,7 @@ function renderNextMonthAdj(sp) {
 
 function applyNextMonthAdj() {
   const sp=monthSpend(), cats=DATA.budgetCats||{};
-  const d=new Date(); d.setMonth(d.getMonth()+1);
+  const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+1);
   const nm=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
   if (!DATA.budgetAdj) DATA.budgetAdj={};
   DATA.budgetAdj[nm]={};
@@ -1199,7 +1295,7 @@ function renderAlerts() {
     if (spent>limit) alerts.push(`<div class="ios-alert ios-alert-red">⚠️ <b>${c.name}</b> vượt ngân sách ${fmt(spent-limit)} tháng này.</div>`);
     else if (spent>limit*.85) alerts.push(`<div class="ios-alert ios-alert-yellow">🔔 <b>${c.name}</b> đã dùng ${Math.round(spent/limit*100)}% ngân sách.</div>`);
   });
-  const prevMonth=(()=>{ const d=new Date(); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
+  const prevMonth=(()=>{ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
   const txns=DATA.txns||[];
   const prevIncome  = txns.filter(t=>t.monthKey===prevMonth&&t.type==="income").reduce((s,t)=>s+t.amount,0);
   const prevExpense = txns.filter(t=>t.monthKey===prevMonth&&(t.type==="expense"||t.type==="saving"||t.type==="debt_payment")).reduce((s,t)=>s+t.amount,0);
@@ -1216,21 +1312,89 @@ function renderAlerts() {
 
 function rolloverBalance(amt) {
   if (!DATA.txns) DATA.txns=[];
-  const prevMonth=(()=>{ const d=new Date(); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
+  const prevMonth=(()=>{ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; })();
   DATA.txns.push({id:Date.now().toString(),type:"income",amount:amt,cat:"income",note:`Số dư tháng ${prevMonth}`,date:today(),monthKey:mk(),rollover:true});
   saveData();render();
   showToast(`+${fmt(amt)} số dư tháng trước đã thêm ✓`);
 }
 
 // ══ TABS ══
+let goalsSeg = "savings", curTab = "budget";
 function showTab(name,btn) {
-  ["budget","log","savings","debt","assets","history","ai"].forEach(t=>{
-    document.getElementById("tab-"+t).classList.toggle("hidden",t!==name);
+  curTab = name;
+  const visible = name==="goals" ? goalsSeg : name;
+  ["budget","savings","debt","assets","history","ai"].forEach(t=>{
+    document.getElementById("tab-"+t).classList.toggle("hidden",t!==visible);
   });
+  document.getElementById("homeHeader").classList.toggle("hidden",name!=="budget");
+  document.getElementById("goalsSeg").classList.toggle("hidden",name!=="goals");
   document.querySelectorAll(".tab-item").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
-  if (name==="log"){document.getElementById("lDate").value=today();buildCatPicker();}
+  window.scrollTo(0,0);
   if (name==="ai") renderAiTab();
+}
+function setGoalsSeg(s) {
+  goalsSeg = s;
+  ["savings","debt","assets"].forEach(t=>{
+    document.getElementById("seg-"+t).classList.toggle("active",t===s);
+    document.getElementById("tab-"+t).classList.toggle("hidden",t!==s);
+  });
+}
+
+// ══ DAILY STATS ══
+function dailyStats() {
+  const cats = DATA?.budgetCats || {};
+  const totalBudget = Object.values(cats).reduce((s,c)=>s+c.limit,0);
+  const m = mk(), t = today();
+  const exp = (DATA?.txns||[]).filter(x=>x.monthKey===m&&x.type==="expense");
+  const spentBefore = exp.filter(x=>(x.date||t)<t).reduce((s,x)=>s+x.amount,0);
+  const todaySpent  = exp.filter(x=>(x.date||t)===t).reduce((s,x)=>s+x.amount,0);
+  const now = new Date();
+  const daysLeft = new Date(now.getFullYear(),now.getMonth()+1,0).getDate() - now.getDate() + 1;
+  const allowance = (totalBudget - spentBefore) / daysLeft;
+  return {totalBudget, allowance, todaySpent, todayLeft: allowance - todaySpent,
+          daysLeft, monthRemain: totalBudget - spentBefore - todaySpent};
+}
+
+function loggedDays() {
+  const s = new Set((DATA?.txns||[]).map(t=>t.date).filter(Boolean));
+  Object.keys(DATA?.noSpendDays||{}).forEach(d=>s.add(d));
+  return s;
+}
+function loggingStreak() {
+  const days = loggedDays();
+  let n = 0, i = days.has(today()) ? 0 : -1;
+  while (days.has(dayOffset(i))) { n++; i--; }
+  return n;
+}
+
+// ══ QUICK LOG ══
+function openQuickLog(dateOffset) {
+  if (!DATA) { showToast("Đang tải dữ liệu…","warn"); return; }
+  setLogType("expense");
+  setLogDate(dateOffset||0);
+  if (!curCat || !DATA.budgetCats?.[curCat]) curCat = sortedCatKeys()[0] || null;
+  buildCatPicker();
+  document.getElementById("lAmount").value = "";
+  document.getElementById("lNote").value = "";
+  document.getElementById("logPreview").classList.add("hidden");
+  openModal("quickLogModal");
+  document.getElementById("lAmount").focus();
+}
+function setLogDate(off) {
+  document.getElementById("lDate").value = dayOffset(off);
+  syncDateChips();
+}
+function syncDateChips() {
+  const v = document.getElementById("lDate").value;
+  document.getElementById("chipToday").classList.toggle("active", v===today());
+  document.getElementById("chipYest").classList.toggle("active", v===dayOffset(-1));
+}
+function sortedCatKeys() {
+  const cats = DATA?.budgetCats || {}, cnt = {};
+  const since = dayOffset(-60);
+  (DATA?.txns||[]).forEach(t=>{ if (t.type==="expense" && (t.date||"")>=since) cnt[t.cat]=(cnt[t.cat]||0)+1; });
+  return Object.keys(cats).sort((a,b)=>(cnt[b]||0)-(cnt[a]||0));
 }
 function setHistoryMonth(m){historyMonth=m;renderHistory();}
 function setCatFilter(c){historyCat=c;renderHistory();}
@@ -1252,9 +1416,9 @@ function setLogType(type) {
 
 function buildCatPicker() {
   const cats=DATA?.budgetCats||{};
-  document.getElementById("catPicker").innerHTML=Object.entries(cats).map(([k,c])=>
-    `<button class="cat-btn ${curCat===k?"active":""}" onclick="selectCat('${k}')">${c.icon} ${c.name}</button>`
-  ).join("")||`<div style="color:var(--label2);font-size:12px;grid-column:span 2">Thêm danh mục trong tab 💰 trước.</div>`;
+  document.getElementById("catPicker").innerHTML=sortedCatKeys().map(k=>
+    `<button class="cat-btn ${curCat===k?"active":""}" onclick="selectCat('${k}')">${cats[k].icon} ${cats[k].name}</button>`
+  ).join("")||`<div style="color:var(--label2);font-size:12px">Thêm danh mục ngân sách ở tab 🏠 trước.</div>`;
 }
 
 function selectCat(k){curCat=k;buildCatPicker();updateLogPreview();}
@@ -1267,9 +1431,13 @@ function updateLogPreview() {
   if (!c)return;
   const spent=sp[curCat]||0, limit=c.limit, newT=spent+amt, over=newT>limit;
   const el=document.getElementById("logPreview");
-  el.className="preview-alert"+(over?" over":"");
+  const isToday=document.getElementById("lDate").value===today();
+  const dLeft=dailyStats().todayLeft-amt;
+  const overDay=isToday&&dLeft<0;
+  el.className="preview-alert"+(over||overDay?" over":"");
   el.classList.remove("hidden");
-  el.innerHTML=`Sau khi chi: <b>${fmt(newT)}</b> / ${fmt(limit)} ${over?"⚠️ Vượt "+fmt(newT-limit):"· Còn "+fmt(limit-newT)}`;
+  el.innerHTML=`${c.icon} ${c.name}: <b>${fmt(newT)}</b> / ${fmt(limit)} ${over?"⚠️ Vượt "+fmt(newT-limit):"· Còn "+fmt(limit-newT)}`
+    +(isToday?`<br>Hôm nay ${dLeft<0?`<b>⚠️ vượt mức ${fmt(dLeft)}</b>`:`còn <b>${fmt(dLeft)}</b>`}`:"");
 }
 
 function submitLog() {
@@ -1299,7 +1467,178 @@ function commitTxn(t) {
   document.getElementById("lAmount").value="";
   document.getElementById("lNote").value="";
   document.getElementById("logPreview").classList.add("hidden");
-  showToast(t.type==="income"?`+${fmt(t.amount)} thu nhập lưu ✓`:`-${fmt(t.amount)} chi tiêu lưu ✓`);
+  closeModal("quickLogModal");
+  if (t.type==="income") { showToast(`+${fmt(t.amount)} thu nhập lưu ✓`); return; }
+  const left=dailyStats().todayLeft;
+  showToast(`-${fmt(t.amount)} ✓ · Hôm nay ${left<0?"vượt "+fmt(left):"còn "+fmt(left)}`, left<0?"warn":"ok");
+}
+
+// ══ DAILY BRIEFING (in-app popup) ══
+const BRIEF_KEY = "tw_brief_date", EVENING_KEY = "tw_evening_date", WEEKLY_SNOOZE_KEY = "tw_weekly_snooze";
+
+function maybeShowPrompts() {
+  if (!DATA || document.querySelector(".modal-bg:not(.hidden)")) return;
+  if (weeklyReviewDue()) { openWeeklyReview(); return; }
+  const t = today(), h = new Date().getHours();
+  const loggedToday = loggedDays().has(t);
+  if (localStorage.getItem(BRIEF_KEY) !== t) {
+    localStorage.setItem(BRIEF_KEY, t);
+    if (h >= 18) localStorage.setItem(EVENING_KEY, t);
+    showBrief(h >= 18 ? "evening" : "morning");
+  } else if (h >= 18 && !loggedToday && localStorage.getItem(EVENING_KEY) !== t) {
+    localStorage.setItem(EVENING_KEY, t);
+    showBrief("evening");
+  }
+}
+
+function showBrief(kind) {
+  const ds = dailyStats(), y = dayOffset(-1), days = loggedDays();
+  document.getElementById("briefTitle").textContent = kind==="evening" ? "🌙 Tổng kết hôm nay" : "☀️ Ngân sách hôm nay";
+  const col = ds.todayLeft<0 ? "var(--red)" : "var(--green)";
+  let body = ds.totalBudget > 0
+    ? `<div class="brief-big" style="color:${col}">${ds.todayLeft<0?"-":""}${fmt(ds.todayLeft)}</div>
+       <div class="brief-sub">${kind==="evening"
+          ? `Hôm nay đã chi <b>${fmt(ds.todaySpent)}</b> / mức ${fmt(Math.max(ds.allowance,0))}.<br>${ds.todayLeft<0?"⚠️ Đã vượt mức hôm nay — ngày mai chi ít lại nhé.":"✅ Trong mức cho phép. Đã ghi hết chi tiêu chưa?"}`
+          : `có thể chi hôm nay để không vượt ngân sách tháng<br>Còn ${fmt(ds.monthRemain)} cho ${ds.daysLeft} ngày`}</div>`
+    : `<div class="brief-sub">Thêm danh mục ngân sách để biết mỗi ngày được chi bao nhiêu.</div>`;
+  const st = loggingStreak();
+  if (st > 0) body += `<div class="brief-sub" style="margin-top:-8px">🔥 Streak ghi chép: <b>${st} ngày</b></div>`;
+  document.getElementById("briefBody").innerHTML = body;
+
+  let extra = "";
+  if (kind==="morning" && !days.has(y)) {
+    extra = `<div class="review-row" style="font-size:13px;line-height:1.6">Hôm qua chưa có ghi chép nào.
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-ghost" style="margin:0;padding:10px;font-size:13px" onclick="closeModal('briefModal');openQuickLog(-1)">＋ Ghi cho hôm qua</button>
+        <button class="btn btn-ghost" style="margin:0;padding:10px;font-size:13px" onclick="markNoSpend('${y}')">Không chi gì</button>
+      </div></div>`;
+  } else if (kind==="evening" && !days.has(today())) {
+    extra = `<button class="btn btn-ghost" onclick="markNoSpend('${today()}')">🙌 Hôm nay không chi gì</button>`;
+  }
+  document.getElementById("briefExtra").innerHTML = extra;
+  openModal("briefModal");
+}
+
+function markNoSpend(d) {
+  if (!DATA.noSpendDays) DATA.noSpendDays = {};
+  DATA.noSpendDays[d] = true;
+  saveData(); render();
+  closeModal("briefModal");
+  showToast("Đã ghi nhận ngày không chi tiêu 🙌");
+}
+
+// ══ WEEKLY GOAL REVIEW ══
+function weeklyReviewDue() {
+  const hasGoals = Object.keys(DATA?.goals||{}).length || Object.keys(DATA?.debts||{}).length;
+  if (!hasGoals) return false;
+  if ((localStorage.getItem(WEEKLY_SNOOZE_KEY)||"") >= today()) return false;
+  const last = DATA.lastGoalReview;
+  if (!last) return true;
+  return (new Date(today()) - new Date(last)) / 864e5 >= 7;
+}
+
+function openWeeklyReview() {
+  const goals = DATA.goals||{}, debts = DATA.debts||{};
+  const ds = dailyStats();
+  const weekStart = dayOffset(-6);
+  const weekSpent = (DATA.txns||[]).filter(t=>t.type==="expense"&&(t.date||"")>=weekStart).reduce((s,t)=>s+t.amount,0);
+  const now = new Date(), dim = new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const weekBudget = ds.totalBudget*7/dim;
+  const weekSaved = (DATA.txns||[]).filter(t=>t.type==="saving"&&(t.date||"")>=weekStart).reduce((s,t)=>s+t.amount,0);
+
+  let html = `<div class="review-row">
+    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:6px"><span>💸 Chi tiêu 7 ngày qua</span><span style="color:${weekSpent>weekBudget?"var(--red)":"var(--green)"}">${fmt(weekSpent)}</span></div>
+    <div style="font-size:12px;color:var(--label2)">Mức tuần ~${fmt(weekBudget)} · ${weekSpent>weekBudget?"⚠️ vượt "+fmt(weekSpent-weekBudget):"✅ dưới mức "+fmt(weekBudget-weekSpent)} · Đã tiết kiệm ${fmt(weekSaved)}</div>
+  </div>`;
+
+  Object.entries(goals).forEach(([k,g])=>{
+    const saved = g.saved||0, pct = g.target>0?Math.min(saved/g.target*100,100):0;
+    const tgt = calcTodayTarget(g);
+    const weeksLeft = g.deadline ? Math.max((new Date(g.deadline)-new Date())/(7*864e5),0) : null;
+    const need = g.target - saved;
+    const perWeek = weeksLeft>0 ? need/weeksLeft : null;
+    const status = pct>=100 ? `<span style="color:var(--green)">🏆 Đã đạt</span>`
+      : tgt===null ? "" : saved>=tgt ? `<span style="color:var(--green)">✅ Đúng tiến độ</span>` : `<span style="color:var(--orange)">⏳ Chậm ${fmt(tgt-saved)}</span>`;
+    html += `<div class="review-row">
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:6px"><span>${g.icon||"🎯"} ${g.name}</span><span style="font-size:12px">${status}</span></div>
+      <div class="ios-bar" style="height:6px"><div class="ios-bar-fill" style="width:${pct}%;background:var(--purple)"></div></div>
+      <div style="font-size:12px;color:var(--label2);margin-top:5px">${fmt(saved)} / ${fmt(g.target)} (${pct.toFixed(0)}%)${need>0&&perWeek!==null?` · Cần <b style="color:var(--label)">${fmt(perWeek)}/tuần</b> để kịp ${fmtDate(g.deadline)}`:""}</div>
+      ${need>0?`<button class="row-btn" style="color:var(--green);margin-top:8px" onclick="closeModal('weeklyModal');quickSaveToGoal('${k}')">＋ Thêm tiền vào mục tiêu</button>`:""}
+    </div>`;
+  });
+
+  Object.values(debts).forEach(d=>{
+    const rem = d.remaining??d.total, paidPct = d.total>0?(1-rem/d.total)*100:0;
+    const months = d.monthly>0 ? Math.ceil(rem/d.monthly) : null;
+    html += `<div class="review-row">
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:6px"><span>${d.icon||"💳"} ${d.name}</span><span style="color:var(--red)">${fmt(rem)}</span></div>
+      <div class="ios-bar" style="height:6px"><div class="ios-bar-fill" style="width:${paidPct}%;background:var(--green)"></div></div>
+      <div style="font-size:12px;color:var(--label2);margin-top:5px">Đã trả ${paidPct.toFixed(0)}%${months!==null?` · ~${months} tháng nữa với ${fmt(d.monthly)}/tháng`:""}</div>
+    </div>`;
+  });
+
+  html += `<div class="brief-sub" style="text-align:left;margin:6px 2px 14px">💭 Tuần tới: mục tiêu nào cần ưu tiên? Có khoản chi nào có thể cắt để dồn vào tiết kiệm?</div>`;
+  document.getElementById("weeklyBody").innerHTML = html;
+  openModal("weeklyModal");
+}
+
+function quickSaveToGoal(k) {
+  showTab("goals", document.querySelectorAll(".tab-item")[2]);
+  setGoalsSeg("savings");
+  selectGoal(k);
+  document.getElementById("gAddAmt").focus();
+}
+
+function completeWeeklyReview() {
+  DATA.lastGoalReview = today();
+  saveData();
+  closeModal("weeklyModal");
+  showToast("Review tuần hoàn tất 🎯 Hẹn tuần sau!");
+}
+function snoozeWeeklyReview() {
+  localStorage.setItem(WEEKLY_SNOOZE_KEY, today());
+  closeModal("weeklyModal");
+}
+
+// ══ PHONE REMINDERS (calendar .ics) ══
+function openSettings() {
+  const saved = JSON.parse(localStorage.getItem("tw_rem")||"{}");
+  if (saved.daily) document.getElementById("remDailyTime").value = saved.daily;
+  if (saved.day) document.getElementById("remWeekDay").value = saved.day;
+  if (saved.week) document.getElementById("remWeekTime").value = saved.week;
+  openModal("settingsModal");
+}
+
+function downloadReminders() {
+  const daily = document.getElementById("remDailyTime").value || "20:00";
+  const day = document.getElementById("remWeekDay").value || "SU";
+  const week = document.getElementById("remWeekTime").value || "19:00";
+  localStorage.setItem("tw_rem", JSON.stringify({daily, day, week}));
+  const url = location.href;
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const t = s => s.replace(":","")+"00";
+  const days = ["SU","MO","TU","WE","TH","FR","SA"];
+  const wd = new Date(d); wd.setDate(d.getDate() + ((days.indexOf(day) - d.getDay() + 7) % 7));
+  const wymd = `${wd.getFullYear()}${String(wd.getMonth()+1).padStart(2,"0")}${String(wd.getDate()).padStart(2,"0")}`;
+  const stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  const ev = (uid, start, rrule, title, desc) => [
+    "BEGIN:VEVENT", `UID:${uid}-${stamp}@toms-wallet`, `DTSTAMP:${stamp}`,
+    `DTSTART:${start}`, "DURATION:PT10M", `RRULE:${rrule}`,
+    `SUMMARY:${title}`, `DESCRIPTION:${desc}\\n${url}`, `URL:${url}`,
+    "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${title}`, "TRIGGER:PT0M", "END:VALARM",
+    "END:VEVENT"
+  ].join("\r\n");
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Toms Wallet//VI","CALSCALE:GREGORIAN",
+    ev("daily-log", `${ymd}T${t(daily)}`, "FREQ=DAILY", "💸 Ghi chi tiêu hôm nay — Tom's Wallet", "Mở app và ghi lại chi tiêu hôm nay. Kiểm tra mức chi còn lại."),
+    ev("weekly-review", `${wymd}T${t(week)}`, `FREQ=WEEKLY;BYDAY=${day}`, "🎯 Review mục tiêu dài hạn — Tom's Wallet", "Xem tiến độ tiết kiệm và trả nợ tuần này."),
+    "END:VCALENDAR"].join("\r\n");
+  const blob = new Blob([ics], {type:"text/calendar;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) a.download = "toms-wallet-nhac-nho.ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast("Chọn \"Thêm tất cả\" vào Lịch ✓");
 }
 
 // ══ GOAL ACTIONS ══
@@ -1543,7 +1882,7 @@ function renderAiTab() {
   const bal = income - expense;
   const savingsRate = income > 0 ? (bal / income * 100) : 0;
 
-  const d0 = new Date(); d0.setMonth(d0.getMonth()-1);
+  const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth()-1);
   const prevM = `${d0.getFullYear()}-${String(d0.getMonth()+1).padStart(2,"0")}`;
   const prevTxns = txns.filter(t => t.monthKey === prevM);
   const prevExpense = prevTxns.filter(t => t.type === "expense" || t.type === "saving" || t.type === "debt_payment").reduce((s,t) => s+t.amount, 0);
