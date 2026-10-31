@@ -970,41 +970,89 @@ function handleImportLink() {
     pkg = JSON.parse(decodeURIComponent(escape(atob(b64 + "===".slice((b64.length+3)%4)))));
   } catch(e) { showToast("Link nhập không hợp lệ","err"); return true; }
   const already = (DATA.imports||{})[pkg.id];
-  const existing = DATA.txns||[];
-  const items = pkg.items
+  const catKey = c => /^[a-z0-9_]{1,40}$/.test(c||"") ? c : "misc";
+
+  // Optional: replace all expenses of a month (skipped if this link was already imported)
+  const rm = (!already && /^\d{4}-\d{2}$/.test(pkg.replaceMonth||""))
+    ? (DATA.txns||[]).filter(t=>t.type==="expense"&&t.monthKey===pkg.replaceMonth&&t.importId!==pkg.id) : [];
+  const rmIds = new Set(rm.map(t=>t.id));
+  const existing = (DATA.txns||[]).filter(t=>!rmIds.has(t.id));
+
+  const items = (pkg.items||[])
     .filter(([type,date,amount]) => ["income","expense","saving"].includes(type) && /^\d{4}-\d{2}-\d{2}$/.test(date) && amount > 0)
-    .map(([type,date,amount,note]) => ({type,date,amount:+amount,note:cleanNote(note),
-    dup: existing.some(t=>t.type===type&&t.date===date&&Math.abs(t.amount-amount)<0.005)}));
-  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup)};
+    .map(([type,date,amount,note,cat]) => ({type,date,amount:+amount,note:cleanNote(note),cat:catKey(cat),
+      dup: existing.some(t=>t.type===type&&t.date===date&&Math.abs(t.amount-amount)<0.005)}));
+
+  // Optional: upsert debts / assets by name
+  const findByName = (obj, name) => Object.keys(obj||{}).find(k => {
+    const a = (obj[k].name||"").toLowerCase(), b = name.toLowerCase();
+    return a && (a.includes(b) || b.includes(a));
+  });
+  const debtOps = (pkg.debts||[]).filter(d=>d.name&&d.remaining>=0).map(d => {
+    const name = cleanNote(d.name), key = findByName(DATA.debts, name);
+    return {key, name, icon:cleanNote(d.icon)||"💳", remaining:+d.remaining, monthly:+d.monthly||0,
+            old: key ? (DATA.debts[key].remaining ?? DATA.debts[key].total) : null};
+  }).filter(d => d.old === null || Math.abs(d.old - d.remaining) >= 0.005);
+  const assetOps = (pkg.assets||[]).filter(a=>a.name&&a.value>=0).map(a => {
+    const name = cleanNote(a.name), key = findByName(DATA.assets, name);
+    return {key, name, type: ASSET_TYPES[a.type] ? a.type : "cash", value:+a.value,
+            old: key ? DATA.assets[key].value : null};
+  }).filter(a => a.old === null || Math.abs(a.old - a.value) >= 0.005);
+  const newCats = Object.entries(pkg.cats||{}).filter(([k])=>/^[a-z0-9_]{1,40}$/.test(k)&&!(DATA.budgetCats||{})[k]);
+
+  pendingImport = {id: pkg.id, items: items.filter(i=>!i.dup), rmIds, debtOps, assetOps, newCats};
   const label = {income:"💵 Thu", expense:"💸 Chi", saving:"💰 Tiết kiệm"};
   const total = pendingImport.items.reduce((s,i)=>s+(i.type==="income"?i.amount:-i.amount),0);
-  document.getElementById("importBody").innerHTML =
-    (already ? `<div class="ios-alert ios-alert-yellow">Link này đã được nhập ngày ${fmtDate(already)}. Chỉ những khoản chưa có mới được thêm.</div>` : "") +
-    `<div class="ios-list" style="max-height:46vh;overflow-y:auto">${items.map(i=>`
-      <div class="ios-row" style="opacity:${i.dup?.4:1}">
-        <div class="ios-info"><div class="ios-name" style="font-size:13px">${i.note}</div>
-          <div class="ios-sub">${fmtDate(i.date)} · ${label[i.type]||i.type}${i.dup?" · đã có, bỏ qua":""}</div></div>
-        <div class="ios-amt" style="color:${i.type==="income"?"var(--green)":"var(--red)"}">${i.type==="income"?"+":"-"}${fmt(i.amount)}</div>
-      </div>`).join("")}</div>
-    <div style="display:flex;justify-content:space-between;font-size:14px;margin:-4px 2px 14px"><span style="color:var(--label2)">${pendingImport.items.length} khoản mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
+  const catName = k => (DATA.budgetCats?.[k]||pkg.cats?.[k])?.name || k;
+  const section = t => `<div class="field-label" style="margin-top:4px">${t}</div>`;
+  const opRow = (title, sub, right, col) => `<div class="ios-row"><div class="ios-info"><div class="ios-name" style="font-size:13px">${title}</div><div class="ios-sub">${sub}</div></div><div class="ios-amt" style="color:${col}">${right}</div></div>`;
+  let html = already ? `<div class="ios-alert ios-alert-yellow">Link này đã được nhập ngày ${fmtDate(already)}. Chỉ những khoản chưa có mới được thêm, không xóa gì.</div>` : "";
+  html += `<div style="max-height:56vh;overflow-y:auto">`;
+  if (rm.length) html += section(`🗑 Xóa ${rm.length} khoản chi cũ ${fmtMonthLabel(pkg.replaceMonth)}`) +
+    `<div class="ios-alert ios-alert-red" style="font-size:12px">Tổng ${fmt(rm.reduce((s,t)=>s+t.amount,0))} — sẽ được thay bằng số liệu ngân hàng bên dưới.</div>`;
+  if (items.length) html += section(`➕ Giao dịch (${pendingImport.items.length} mới)`) + `<div class="ios-list">${items.map(i=>
+    `<div class="ios-row" style="opacity:${i.dup?.4:1}"><div class="ios-info"><div class="ios-name" style="font-size:13px">${i.note}</div>
+      <div class="ios-sub">${fmtDate(i.date)} · ${label[i.type]}${i.type==="expense"?" → "+catName(i.cat):""}${i.dup?" · đã có, bỏ qua":""}</div></div>
+      <div class="ios-amt" style="color:${i.type==="income"?"var(--green)":"var(--red)"}">${i.type==="income"?"+":"-"}${fmt(i.amount)}</div></div>`).join("")}</div>`;
+  if (debtOps.length) html += section("💳 Khoản nợ") + `<div class="ios-list">${debtOps.map(d=>opRow(`${d.icon} ${d.name}`,
+    d.key ? `Cập nhật · trước đây ${fmt(d.old||0)}` : "Thêm mới", fmt(d.remaining), "var(--red)")).join("")}</div>`;
+  if (assetOps.length) html += section("🏦 Số dư tài khoản / tài sản") + `<div class="ios-list">${assetOps.map(a=>opRow(`${ASSET_TYPES[a.type].icon} ${a.name}`,
+    a.key ? `Cập nhật · trước đây ${fmt(a.old||0)}` : "Thêm mới", fmt(a.value), "var(--green)")).join("")}</div>`;
+  if (newCats.length) html += section("📁 Danh mục ngân sách mới") + `<div class="ios-list">${newCats.map(([k,c])=>opRow(`${cleanNote(c.icon)} ${cleanNote(c.name)}`, "Hạn mức/tháng", fmt(+c.limit||0), "var(--label)")).join("")}</div>`;
+  html += `</div><div style="display:flex;justify-content:space-between;font-size:14px;margin:8px 2px 14px"><span style="color:var(--label2)">Giao dịch mới</span><b>${total>=0?"+":"-"}${fmt(total)}</b></div>`;
+  document.getElementById("importBody").innerHTML = html;
+  const nOps = pendingImport.items.length + rm.length + debtOps.length + assetOps.length + newCats.length;
   const btn = document.getElementById("importBtn");
-  btn.textContent = `Nhập ${pendingImport.items.length} giao dịch`;
-  btn.disabled = !pendingImport.items.length;
+  btn.textContent = nOps ? "Xác nhận cập nhật" : "Không có gì mới";
+  btn.disabled = !nOps;
   openModal("importModal");
   return true;
 }
 function confirmImport() {
-  if (!pendingImport) return;
-  if (!DATA.txns) DATA.txns = [];
+  const P = pendingImport;
+  if (!P) return;
+  if (!DATA.budgetCats) DATA.budgetCats = {};
+  P.newCats.forEach(([k,c]) => DATA.budgetCats[k] = {name:cleanNote(c.name), icon:cleanNote(c.icon)||"📁", limit:+c.limit||0});
+  DATA.txns = (DATA.txns||[]).filter(t=>!P.rmIds.has(t.id));
   const base = Date.now();
-  pendingImport.items.forEach((i,n) => DATA.txns.push({
-    id:String(base+n), type:i.type, amount:i.amount, cat:i.type==="income"?"income":(i.cat||"misc"),
-    note:i.note, date:i.date, monthKey:i.date.slice(0,7)}));
+  P.items.forEach((i,n) => DATA.txns.push({
+    id:String(base+n), type:i.type, amount:i.amount, cat:i.type==="income"?"income":i.cat,
+    note:i.note, date:i.date, monthKey:i.date.slice(0,7), importId:P.id}));
+  if (!DATA.debts) DATA.debts = {};
+  P.debtOps.forEach((d,n) => {
+    if (d.key) { const x = DATA.debts[d.key]; x.remaining = d.remaining; if (d.remaining > (x.total||0)) x.total = d.remaining; if (d.monthly) x.monthly = d.monthly; }
+    else DATA.debts["d"+(base+n)] = {name:d.name, icon:d.icon, total:d.remaining, remaining:d.remaining, monthly:d.monthly};
+  });
+  if (!DATA.assets) DATA.assets = {};
+  P.assetOps.forEach((a,n) => {
+    if (a.key) DATA.assets[a.key].value = a.value;
+    else DATA.assets["a"+(base+n)] = {name:a.name, type:a.type, value:a.value};
+  });
   if (!DATA.imports) DATA.imports = {};
-  DATA.imports[pendingImport.id] = today();
+  DATA.imports[P.id] = today();
   saveData(); render();
   closeModal("importModal");
-  showToast(`Đã nhập ${pendingImport.items.length} giao dịch ✓`);
+  showToast("Đã cập nhật ví ✓");
   pendingImport = null;
 }
 
